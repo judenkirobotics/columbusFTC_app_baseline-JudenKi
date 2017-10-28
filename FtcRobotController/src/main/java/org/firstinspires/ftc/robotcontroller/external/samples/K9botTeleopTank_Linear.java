@@ -49,7 +49,7 @@ import com.qualcomm.robotcore.util.Range;
  *
  * Use Android Studios to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
- * You're a wizard Howard. (plez delete thez)I like tacos. Do you? I like Turtles
+ * Son I Am Your Father ~Jefe, NOOOOOOOOOOOOOOO! ~ You
  */
 
 @TeleOp(name="K9bot: Telop Tank", group="K9bot")
