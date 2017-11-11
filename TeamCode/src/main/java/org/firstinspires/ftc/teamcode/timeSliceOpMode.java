@@ -69,6 +69,7 @@ public class timeSliceOpMode extends LinearOpMode {
         /*
          * Initialize the drive system variables.
          * The init() method of the hardware class does all the work here
+         * hi
          */
         robot.init(hardwareMap);
 
@@ -89,7 +90,12 @@ public class timeSliceOpMode extends LinearOpMode {
         rightDrive.setDirection(DcMotor.Direction.REVERSE);
         double leftPower = 0;
         double rightPower = 0;
-
+        double pushDown = 0;
+        double pickUp = 0;
+        double converorPower = 0;
+        double RT = 0;
+        double LT = 0;
+        boolean BA = false;
 
         //A Timing System By Jeffrey & Alexis
         // long currentThreadTimeMillis (0);
@@ -156,6 +162,7 @@ public class timeSliceOpMode extends LinearOpMode {
 
             if (CurrentTime - LastServo > SERVOPERIOD) {
                 LastServo = CurrentTime;
+                pushDown = RT;
             }
 
             if (CurrentTime - LastNav > NAVPERIOD) {
@@ -166,14 +173,26 @@ public class timeSliceOpMode extends LinearOpMode {
                 LastMotor = CurrentTime;
                 leftDrive.setPower(leftPower);
                 rightDrive.setPower(rightPower);
+                converorPower = LT;
             }
 
             if (CurrentTime - LastController > CONTROLLERPERIOD){
                 LastController = CurrentTime;
+                RT = gamepad1.right_trigger;
+                BA = gamepad1.a;
+                LT = gamepad1.left_trigger;
                 double drive = -gamepad1.left_stick_y;
                 double turn  =  gamepad1.right_stick_x;
                 leftPower    = Range.clip(drive + turn, -1.0, 1.0) ;
                 rightPower   = Range.clip(drive - turn, -1.0, 1.0) ;
+                while(BA = true){
+                    if(pickUp<1) {
+                        pickUp += 0.1;
+                    }
+                }
+
+                pickUp = 0;
+
 
             }
 
