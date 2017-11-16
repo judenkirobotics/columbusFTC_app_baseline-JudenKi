@@ -37,14 +37,11 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
+import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
 
 import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
 
 
-
-/**
-
- */
 
 @Autonomous(name="Time Slide Op Mode", group="Pushbot")
 //@Disabled
@@ -53,6 +50,7 @@ public class timeSliceOpMode extends LinearOpMode {
     /* Declare OpMode members. */
     HardwarePushbot         robot   = new HardwarePushbot();   // Use a Pushbot's hardware
     private ElapsedTime     runtime = new ElapsedTime();
+    OpticalDistanceSensor odsSensor;
 
     static final double     COUNTS_PER_MOTOR_REV    = 1440 ;    // eg: TETRIX Motor Encoder
     static final double     DRIVE_GEAR_REDUCTION    = 2.0 ;     // This is < 1.0 if geared UP
@@ -69,8 +67,9 @@ public class timeSliceOpMode extends LinearOpMode {
         /*
          * Initialize the drive system variables.
          * The init() method of the hardware class does all the work here
-         * hi
+         * Your dreams are broken, or are they
          */
+
         robot.init(hardwareMap);
 
         // Send telemetry message to signify robot waiting;
@@ -154,6 +153,7 @@ public class timeSliceOpMode extends LinearOpMode {
             //Loop For Timing System
             if (CurrentTime - LastSensor > SENSORPERIOD) {
                 LastSensor = CurrentTime;
+                odsSensor.getLightDetected();
             }
 
             if (CurrentTime - LastEncoderRead > ENCODERPERIOD) {
@@ -185,7 +185,7 @@ public class timeSliceOpMode extends LinearOpMode {
                 double turn  =  gamepad1.right_stick_x;
                 leftPower    = Range.clip(drive + turn, -1.0, 1.0) ;
                 rightPower   = Range.clip(drive - turn, -1.0, 1.0) ;
-                while(BA = true){
+                while(BA == true){
                     if(pickUp<1) {
                         pickUp += 0.1;
                     }
@@ -198,6 +198,7 @@ public class timeSliceOpMode extends LinearOpMode {
 
             if (CurrentTime - LastTelemetry > TELEMETRYPERIOD) {
                 LastTelemetry = CurrentTime;
+                telemetry.addData("Normal odsSensor", odsSensor.getLightDetected());
                 telemetry.update();
             }
         }
