@@ -39,6 +39,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
+
 //import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
 
 /**
@@ -46,13 +48,14 @@ import com.qualcomm.robotcore.util.Range;
  */
 
 //@Autonomous(name="Time Slide Op Mode", group="Pushbot")
-@TeleOp(name = "Time Slice Op Mode", group = "Pushbot")
+@SuppressWarnings("WeakerAccess")
+@TeleOp(name = "Time Slice Op Mode", group = "K9Bot")
 //@Disabled
-public class timeSliceOpMode extends LinearOpMode {
+public class timeSliceOpMode_Improved extends LinearOpMode {
 
     /* Declare OpMode members. */
-    private KernelPanic robot = new KernelPanic();   // Use a Pushbot's hardware
-
+    //private judenKiBot robot = new judenKiBot();   // Use a Pushbot's hardware
+    HardwarePushbot robot   = new HardwarePushbot();   // Use a Pushbot's hardware
     private static final double COUNTS_PER_MOTOR_REV = 1440;    // eg: TETRIX Motor Encoder
     private static final double DRIVE_GEAR_REDUCTION = 2.0;     // This is < 1.0 if geared UP
     private static final double WHEEL_DIAMETER_INCHES = 4.0;     // For figuring circumference
@@ -98,15 +101,22 @@ public class timeSliceOpMode extends LinearOpMode {
     final double DERGAIN  = 0.1;
     final long PIDMAXDUR  = 3;
 
+    final int RISER_DISTANCE = 500;
+
+    int rightMotorPos;
+    int lefMotorPos;
+    int riserMotorPos;
+    int prevRiserErr = 0;
+
     double position = (MAX_POS - MIN_POS) / 2; // Start at halfway position
 
-    public double simplePID (double err, long duration, double prevErr)
+    public double simplePID (double err, double duration, double prevErr)
     {
         double pidmin = -.7;
         double pidmax = 0.7;
-        double propTerm = PROPGAIN * err;
-        double intTerm = Range.clip(duration/PIDMAXDUR,0,PIDMAXDUR)*INTGAIN;
-        double derTerm = Math.abs(err - prevErr) * DERGAIN;
+        double propTerm = Range.clip(PROPGAIN * err, pidmin, pidmax);
+        double intTerm = Range.clip(duration/PIDMAXDUR,pidmin,pidmax)*INTGAIN;
+        double derTerm = Range.clip((err - prevErr),pidmin,pidmax) * DERGAIN;
         return (Range.clip(propTerm + intTerm + derTerm, pidmin,pidmax));
     }
 
@@ -123,24 +133,6 @@ public class timeSliceOpMode extends LinearOpMode {
         // Send telemetry message to signify robot waiting;
         telemetry.addData("Status", "Resetting Encoders");    //
         telemetry.update();
-
-
-        ElapsedTime runtime = new ElapsedTime();
-        DcMotor leftMotor = null;
-        DcMotor rightMotor = null;
-
-        //A Timing System By Katherine Jeffrey,and Alexis
-        // long currentThreadTimeMillis (0);
-        //
-
-        // Wait for the game to start (driver presses PLAY)
-        waitForStart();
-        runtime.reset();
-
-        /* ************************************************************
-         *            Everything below here  \\ press START           *
-         **************************************************************/
-        //@Override
 
         long CurrentTime = System.currentTimeMillis();
 
@@ -176,11 +168,34 @@ public class timeSliceOpMode extends LinearOpMode {
         long clampStart = 0;
         long liftStart = 0;
 
+
         //double legTime = CurrentTime;
         //double lastTelemetry = CurrentTime;
         double timeLeft = 0;
         telemetry.addData("Status", "Initialized");
         telemetry.update();
+
+        ElapsedTime runtime = new ElapsedTime();
+        DcMotor leftMotor = null;
+        DcMotor rightMotor = null;
+
+        //A Timing System By Katherine Jeffrey,and Alexis
+        // long currentThreadTimeMillis (0);
+        //
+        int riserZero = riser.getCurrentPosition();
+
+        // Wait for the game to start (driver presses PLAY)
+
+        waitForStart();
+        runtime.reset();
+/* ***********************************************************************************************
+   *****************************                CODE          ************************************
+   ************************************************************************************************/
+
+
+        /* ************************************************************
+         *            Everything below here  \\ press START           *
+         **************************************************************/
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
@@ -194,7 +209,7 @@ public class timeSliceOpMode extends LinearOpMode {
              ****************************************************/
             if (CurrentTime - LastSensor > SENSORPERIOD) {
                 LastSensor = CurrentTime;
-
+                // no sensors at this time.  If we add some, change this comment.
             }
 
 
@@ -205,7 +220,9 @@ public class timeSliceOpMode extends LinearOpMode {
                 LastEncoderRead = CurrentTime;
                 // We want to READ the Encoders here
                 //    ONLY set the motors in motion in ONE place.
-
+                rightMotorPos = rightDrive.getCurrentPosition();
+                lefMotorPos = leftDrive.getCurrentPosition();
+                riserMotorPos = riser.getCurrentPosition();
 
             }
             /* **************************************************
@@ -224,9 +241,13 @@ public class timeSliceOpMode extends LinearOpMode {
                 //g1_RightX = gamepad1.right_stick_x;
                 g1_RightY = gamepad1.right_stick_y;
 
-                // do a little debounce on gamepad1.a so we don't drop the block until we want
+                // do a little debounce on gamepad1.a so we don't drop the block accidentally
+                // 6 counts at 30 milliseconds will delay things by 180 ms, but that allows
+                // a flaky controller or a jittery operator. Splitting out the sensor "reads"
+                // from the rest of the logic let's us do this here, rather than muddling up
+                // the main logic of a more abstract, more complicated piece of code.
                 g1_A_Counts = Range.clip((gamepad1.a)? g1_A_Counts++ : g1_A_Counts--, 0,12);
-                g1_A = (g1_A_Counts > 5)? true : false;
+                g1_A = (g1_A_Counts >= 6)? true : false;
                 //g1_B = gamepad1.b;
         /*  ***********************************************************************
          ^^^^^^^^^^^^^ ALL OF THE STUFF ABOVE HERE IS READING INPUTS ^^^^^^^^^^^^^^^
@@ -234,7 +255,7 @@ public class timeSliceOpMode extends LinearOpMode {
 
 
 
-
+        /* ********************************************************************************/
         /* vvvvvvvvvvvvvvvvvv  THIS SECTION IS MAPPING INPUTS TO OUTPUTS vvvvvvvvvvvvvvvvv*/
 
             /* **************************************************
@@ -245,10 +266,17 @@ public class timeSliceOpMode extends LinearOpMode {
              *                         motor
              ****************************************************/
                 if (CurrentTime - LastNav > NAVPERIOD) {
+                    LastNav = CurrentTime;
+
+                    // init drive min and max to default values.  We'll reset them to other numbers
+                    // if conditions demand it.
                     float driveMax = 1;
                     float driveMin = -1;
+                    float riserMax = 1;
+                    float riserMin = -1;
+                    double riserTarget = 0;
 
-                    LastNav = CurrentTime;
+
                     // mapping inputs to servo command
                     if (g1_A){
                         // apply a limit to motor speed while the lift operation is in process
@@ -259,64 +287,75 @@ public class timeSliceOpMode extends LinearOpMode {
                         leftClamp_Cmd = LEFTCLAMPED;
                         rightClamp_Cmd = RIGHTCLAMPED;
                         if (liftDuration > CLAMP_MOTION_TIME) {
-                            // begin lift operation
+                            // begin lift operation after allowing CLAMP_MOTION_TIME for the servos
+                            // to close.
                             // using the riser encoder and/or time, put in a PID to get it to the
                             // right position and stay there.
+                            int posErr = (riserZero - riserMotorPos);
+                            prevRiserErr = (prevRiserErr == 0)? posErr : prevRiserErr;
 
+                            riserTarget = simplePID(posErr, liftDuration, prevRiserErr);
+                            prevRiserErr = posErr;
                             // can also put in a small left/right adjustment based on bumpers
                             // BUT: PLEASE don't read the gamepad bumpers here.  This section
                             // of code has a LOT going on already.  Read the bumpers elsewhere
                             // and use them as variables here.  Can also use x axis on right stick
                             // for offset on right servo and x axis on left stick for left servo
                             // adjustments.  Just an idea.
-
-
                         }
-
-                        clampOffset += CLAMP_SPEED;
-                        }
-                        else {
-                            liftDuration = (liftDuration > 0) ? liftDuration - NAVPERIOD : 0;
-                            liftOffDuration += NAVPERIOD;
-                            leftClamp_Cmd = LEFTUNCLAMPED;
-                            rightClamp_Cmd = RIGHTUNCLAMPED;
-                            if (liftOffDuration >= CLAMP_MOTION_TIME) {
-                                // allow motor to relax
-                            }
-                        }
-                        // mapping inputs to motor commands
-                        g1_LeftY = g1_LeftY * g1_LeftY * g1_LeftY;
-                        g1_RightY = g1_RightY * g1_RightY * g1_RightY;
-
-                        leftDriveCmd =  Range.clip(g1_LeftY,  driveMin, driveMax);
-                        rightDriveCmd = Range.clip(g1_RightY, driveMin, driveMax);
-                        riserCmd =      Range.clip(riserCmd, (float)-1, (float)1);
-
                     }
+                    else {
+                        liftDuration = (liftDuration > 0) ? liftDuration - NAVPERIOD : 0;
+                        liftOffDuration += NAVPERIOD;
+                        leftClamp_Cmd = LEFTUNCLAMPED;
+                        rightClamp_Cmd = RIGHTUNCLAMPED;
+                        if (liftOffDuration >= CLAMP_MOTION_TIME) {
+                            int riserErr = (riserZero - riserMotorPos);
+                            riserTarget = simplePID(riserErr,liftOffDuration,prevRiserErr);
+                            prevRiserErr = riserErr;
+                            // allow motor to relax
+                        }
+                    }
+                    // mapping inputs to motor commands - cube them to desensetize them around
+                    // the 0,0 point.  Switching to single stick operation ought to be pretty
+                    // straightforward, if that's desired.  Using 2 sticks was simpler to
+                    // code up in a hurry.
+                    g1_LeftY  = g1_LeftY  * g1_LeftY  * g1_LeftY;
+                    g1_RightY = g1_RightY * g1_RightY * g1_RightY;
+
+
+                    // The ONLY place we set the motor power variables. Set them here, and
+                    // we will never have to worry about which set is clobbering the other.
+                    // I aligned them this way to make it REALLY clear what's going on.
+                    leftDriveCmd  = Range.clip(g1_LeftY,           driveMin, driveMax);
+                    rightDriveCmd = Range.clip(g1_RightY,          driveMin, driveMax);
+                    riserCmd      = Range.clip((float)riserTarget, riserMin, riserMax);
                 }                    // END NAVIGATION
 
 
-        /*   ^^^^^^^^^^^^^^^^  THIS SECTION IS MAPPING INPUTS TO OUTPUTS ^^^^^^^^^^^^^^^*/
+        /*   ^^^^^^^^^^^^^^^^  THIS SECTION IS MAPPING INPUTS TO OUTPUTS   ^^^^^^^^^^^^^^^*/
+        /* ********************************************************************************/
 
 
 
-
-            /*  ***********************************************************************
-                 ALL OF THE STUFF BELOW HERE IS WRITING OUTPUTS
-             * VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
+        /*  ***********************************************************************
+         * VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+         *           ALL OF THE STUFF BELOW HERE IS WRITING OUTPUTS
+         * VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 
             /* **************************************************
-             *                SERVO
+             *                SERVO OUTPUT
              *                Inputs: leftClamp position command
              *                        rightClamp position command *
+             *                Outputs: Physical write to servo interface.
              ****************************************************/
                 if (CurrentTime - LastServo > SERVOPERIOD) {
                     LastServo = CurrentTime;
 
-                    // Move both servos to new position.  Assume servos are mirror image of each other.
-                    leftClamp.setPosition(robot.MID_SERVO + clampOffset);
-                    rightClamp.setPosition(robot.MID_SERVO - clampOffset);
+                    // Move both servos to new position.
+                    leftClamp.setPosition(leftClamp_Cmd);
+                    rightClamp.setPosition(rightClamp_Cmd);
                 }
 
 
@@ -327,7 +366,8 @@ public class timeSliceOpMode extends LinearOpMode {
              ****************************************************/
                 if (CurrentTime - LastMotor > MOTORPERIOD) {
                     LastMotor = CurrentTime;
-
+                    // Yes, we'll set the power each time, even if it's zero.
+                    // this way we don't accidentally leave it somewhere.  Just simpler this way.
                     /*  Left Drive Motor Power  */
                     leftDrive.setPower(leftDriveCmd);
 
