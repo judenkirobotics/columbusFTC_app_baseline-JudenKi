@@ -56,13 +56,13 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
     /* Declare OpMode members. */
     //private judenKiBot robot = new judenKiBot();   // Use a Pushbot's hardware
     HardwarePushbot robot   = new HardwarePushbot();   // Use a Pushbot's hardware
-    private static final double COUNTS_PER_MOTOR_REV = 1440;    // eg: TETRIX Motor Encoder
-    private static final double DRIVE_GEAR_REDUCTION = 2.0;     // This is < 1.0 if geared UP
-    private static final double WHEEL_DIAMETER_INCHES = 4.0;     // For figuring circumference
-    private static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
-            (WHEEL_DIAMETER_INCHES * 3.1415);
-    private static final double DRIVE_SPEED = 0.6;
-    private static final double TURN_SPEED = 0.5;
+ //   private static final double COUNTS_PER_MOTOR_REV = 1440;    // eg: TETRIX Motor Encoder
+ //   private static final double DRIVE_GEAR_REDUCTION = 2.0;     // This is < 1.0 if geared UP
+ //   private static final double WHEEL_DIAMETER_INCHES = 4.0;     // For figuring circumference
+ //   private static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
+ //           (WHEEL_DIAMETER_INCHES * 3.1415);
+ //   private static final double DRIVE_SPEED = 0.6;
+ //   private static final double TURN_SPEED = 0.5;
 
 
     /* Public OpMode members. */
@@ -74,10 +74,10 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
     public Servo leftClamp = null;
     public Servo rightClamp = null;
 
-    static final double INCREMENT = 0.01;     // amount to slew servo each CYCLE_MS cycle
-    static final int CYCLE_MS = 50;     // period of each cycle
-    static final double MAX_POS = 1.0;     // Maximum rotational position
-    static final double MIN_POS = 0.0;     // Minimum rotational position
+  //  static final double INCREMENT = 0.01;     // amount to slew servo each CYCLE_MS cycle
+  //  static final int CYCLE_MS = 50;     // period of each cycle
+  //  static final double MAX_POS = 1.0;     // Maximum rotational position
+//    static final double MIN_POS = 0.0;     // Minimum rotational position
     static final double LEFTCLAMPED = 45;
     static final double LEFTUNCLAMPED = -5;
     static final double RIGHTCLAMPED = 5;
@@ -85,8 +85,8 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
 
     static final double CLAMP_MOTION_TIME = 250;
 
-    double clampOffset = 0;                       // Servo mid position
-    final double CLAMP_SPEED = 0.02;                   // sets rate to move servo
+    //double clampOffset = 0;                       // Servo mid position
+    //final double CLAMP_SPEED = 0.02;                   // sets rate to move servo
 
     final long SENSORPERIOD = 50;
     final long ENCODERPERIOD = 50;
@@ -108,7 +108,7 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
     int riserMotorPos;
     int prevRiserErr = 0;
 
-    double position = (MAX_POS - MIN_POS) / 2; // Start at halfway position
+    //double position = (MAX_POS - MIN_POS) / 2; // Start at halfway position
 
     public double simplePID (double err, double duration, double prevErr)
     {
@@ -148,9 +148,9 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
         long liftOffDuration = 0;
 
         // variables for controller inputs.
-        float g1_leftX;
+        //float g1_leftX;
         float g1_LeftY;
-        float g1_RightX;
+        //float g1_RightX;
         float g1_RightY;
         int g1_A_Counts = 0;
 
@@ -162,22 +162,22 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
         float riserCmd = 0;
 
         boolean g1_A;
-        boolean g1_B;
+        //boolean g1_B;
 
         // variables to support clamp and lift
-        long clampStart = 0;
-        long liftStart = 0;
+        //long clampStart = 0;
+        //long liftStart = 0;
 
 
         //double legTime = CurrentTime;
         //double lastTelemetry = CurrentTime;
-        double timeLeft = 0;
+        //double timeLeft = 0;
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
         ElapsedTime runtime = new ElapsedTime();
-        DcMotor leftMotor = null;
-        DcMotor rightMotor = null;
+        //DcMotor leftMotor = null;
+        //DcMotor rightMotor = null;
 
         //A Timing System By Katherine Jeffrey,and Alexis
         // long currentThreadTimeMillis (0);
@@ -246,8 +246,8 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
                 // a flaky controller or a jittery operator. Splitting out the sensor "reads"
                 // from the rest of the logic let's us do this here, rather than muddling up
                 // the main logic of a more abstract, more complicated piece of code.
-                g1_A_Counts = Range.clip((gamepad1.a)? g1_A_Counts++ : g1_A_Counts--, 0,12);
-                g1_A = (g1_A_Counts >= 6)? true : false;
+                g1_A_Counts = Range.clip((gamepad1.a)? g1_A_Counts + 1 : g1_A_Counts - 1, 0,12);
+                g1_A = (g1_A_Counts >= 6);
                 //g1_B = gamepad1.b;
         /*  ***********************************************************************
          ^^^^^^^^^^^^^ ALL OF THE STUFF ABOVE HERE IS READING INPUTS ^^^^^^^^^^^^^^^
@@ -291,7 +291,7 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
                             // to close.
                             // using the riser encoder and/or time, put in a PID to get it to the
                             // right position and stay there.
-                            int posErr = (riserZero - riserMotorPos);
+                            int posErr = (riserZero + RISER_DISTANCE - riserMotorPos);
                             prevRiserErr = (prevRiserErr == 0)? posErr : prevRiserErr;
 
                             riserTarget = simplePID(posErr, liftDuration, prevRiserErr);
