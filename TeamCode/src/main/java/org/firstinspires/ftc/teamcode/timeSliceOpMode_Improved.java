@@ -44,9 +44,6 @@ import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
 
 //import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
 
-/**
-
- */
 
 //@Autonomous(name="Time Slide Op Mode", group="Pushbot")
 @SuppressWarnings("WeakerAccess")

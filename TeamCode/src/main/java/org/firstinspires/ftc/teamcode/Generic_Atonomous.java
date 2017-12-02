@@ -26,7 +26,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+//import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
@@ -38,7 +38,7 @@ import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 //@Autonomous(name="Pushbot: Auto Drive By Encoder", group="Pushbot")
 
-@Autonomous(name="Time Slide Op Mode", group="Pushbot")
+@Autonomous(name="Generic Autonomous Op Mode", group="Pushbot")
 @SuppressWarnings("WeakerAccess")
 //@TeleOp(name = "Time Slice Op Mode", group = "HardwarePushbot")
 //@Disabled
