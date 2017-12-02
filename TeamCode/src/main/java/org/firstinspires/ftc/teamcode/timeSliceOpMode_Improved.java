@@ -50,7 +50,7 @@ import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
 
 //@Autonomous(name="Time Slide Op Mode", group="Pushbot")
 @SuppressWarnings("WeakerAccess")
-@TeleOp(name = "Time Slice Op Mode", group = "K9Bot")
+@TeleOp(name = "Time Slice Op Mode Improved", group = "K9Bot")
 //@Disabled
 public class timeSliceOpMode_Improved extends LinearOpMode {
 
@@ -87,6 +87,8 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
     static final double LEFTUNCLAMPED = -5;
     static final double RIGHTCLAMPED = 5;
     static final double RIGHTUNCLAMPED = -45;
+    static boolean liftComplete = false;
+    static boolean rampLimit = false;
 
     static final double CLAMP_MOTION_TIME = 250;
 
@@ -166,9 +168,10 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
         float leftDriveCmd = 0;
         float rightDriveCmd = 0;
         float riserCmd = 0;
+        float loaderCmd = 0;
 
         boolean g1_A;
-        //boolean g1_B;
+        boolean g1_B;
 
         // variables to support clamp and lift
         //long clampStart = 0;
@@ -228,18 +231,15 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
 
                 // while the op mode is active, loop and read the light levels.
                 // Note we use opModeIsActive() as our loop condition because it is an interruptible method.
-                while (opModeIsActive()) {
 
                     // send the info back to driver station using telemetry function.
                     // if the digital channel returns true it's HIGH and the button is unpressed.
-                    if (digitalTouch.getState() == true) {
-                        telemetry.addData("Digital Touch", "Is Not Pressed");
-                    } else {
-                        telemetry.addData("Digital Touch", "Is Pressed");
-                    }
-
-                    telemetry.update();
-
+                if (digitalTouch.getState() == true) {
+                    rampLimit = true;
+                    telemetry.addData("Digital Touch", "Is Not Pressed");
+                } else {
+                    rampLimit = false;
+                    telemetry.addData("Digital Touch", "Is Pressed");
                 }
 
 
@@ -252,7 +252,7 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
                     //    ONLY set the motors in motion in ONE place.
                     rightMotorPos = rightDrive.getCurrentPosition();
                     lefMotorPos = leftDrive.getCurrentPosition();
-                    riserMotorPos = riser.getCurrentPosition();
+                    //riserMotorPos = riser.getCurrentPosition();
 
                 }
             /* **************************************************
@@ -278,7 +278,7 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
                     // the main logic of a more abstract, more complicated piece of code.
                     g1_A_Counts = Range.clip((gamepad1.a) ? g1_A_Counts + 1 : g1_A_Counts - 1, 0, 12);
                     g1_A = (g1_A_Counts >= 6);
-                    //g1_B = gamepad1.b;
+                    g1_B = gamepad1.b;
         /*  ***********************************************************************
          ^^^^^^^^^^^^^ ALL OF THE STUFF ABOVE HERE IS READING INPUTS ^^^^^^^^^^^^^^^
          ***************************************************************************/
@@ -304,6 +304,10 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
                         float driveMin = -1;
                         float riserMax = 1;
                         float riserMin = -1;
+                        float loaderMax = 1;
+                        float loaderMin = -1;
+                        float riserCmdRaw = 0;
+                        float loaderCmdRaw = 0;
                         double riserTarget = 0;
 
 
@@ -313,37 +317,32 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
                             driveMax = (float) 0.5;
                             driveMin = (float) -0.5;
                             liftDuration += NAVPERIOD;
-                            liftOffDuration = 0;
-                            leftClamp_Cmd = LEFTCLAMPED;
-                            rightClamp_Cmd = RIGHTCLAMPED;
-                            if (liftDuration > CLAMP_MOTION_TIME) {
-                                // begin lift operation after allowing CLAMP_MOTION_TIME for the servos
-                                // to close.
-                                // using the riser encoder and/or time, put in a PID to get it to the
-                                // right position and stay there.
-                                int posErr = (riserZero + RISER_DISTANCE - riserMotorPos);
-                                prevRiserErr = (prevRiserErr == 0) ? posErr : prevRiserErr;
-
-                                riserTarget = simplePID(posErr, liftDuration, prevRiserErr);
-                                prevRiserErr = posErr;
-                                // can also put in a small left/right adjustment based on bumpers
-                                // BUT: PLEASE don't read the gamepad bumpers here.  This section
-                                // of code has a LOT going on already.  Read the bumpers elsewhere
-                                // and use them as variables here.  Can also use x axis on right stick
-                                // for offset on right servo and x axis on left stick for left servo
-                                // adjustments.  Just an idea.
+                            if ((liftDuration > CLAMP_MOTION_TIME) || (rampLimit)) {
+                               // shut it down
+                                liftComplete = true;
+                                driveMax = (float)1.0;
+                                driveMin = (float)-1.0;
+                                riserMax = 0;
+                                riserMin = (float)-0.2;
+                                riserCmdRaw = (float)-0.2;
+                            }
+                            else {
+                                driveMax = (float) 0.3;
+                                driveMin = (float) -0.3;
+                                riserCmdRaw = (float)0.2;
                             }
                         } else {
-                            liftDuration = (liftDuration > 0) ? liftDuration - NAVPERIOD : 0;
-                            liftOffDuration += NAVPERIOD;
-                            leftClamp_Cmd = LEFTUNCLAMPED;
-                            rightClamp_Cmd = RIGHTUNCLAMPED;
-                            if (liftOffDuration >= CLAMP_MOTION_TIME) {
-                                int riserErr = (riserZero - riserMotorPos);
-                                riserTarget = simplePID(riserErr, liftOffDuration, prevRiserErr);
-                                prevRiserErr = riserErr;
-                                // allow motor to relax
-                            }
+                            driveMax = (float) 0.2;
+                            driveMin = (float) -0.1;
+                            riserCmdRaw = (float)0.0;
+                        }
+                        if (g1_B) {
+                            // drive the conveyor motor up
+                            loaderCmdRaw = (float)0.3;
+                        }
+                        else
+                        {
+                            loaderCmdRaw = (float)0.0;
                         }
                         // mapping inputs to motor commands - cube them to desensetize them around
                         // the 0,0 point.  Switching to single stick operation ought to be pretty
@@ -358,7 +357,8 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
                         // I aligned them this way to make it REALLY clear what's going on.
                         leftDriveCmd = Range.clip(g1_LeftY, driveMin, driveMax);
                         rightDriveCmd = Range.clip(g1_RightY, driveMin, driveMax);
-                        riserCmd = Range.clip((float) riserTarget, riserMin, riserMax);
+                        riserCmd = Range.clip(riserCmdRaw, riserMin, riserMax);
+                        loaderCmd = Range.clip(loaderCmdRaw, loaderMin,loaderMax);
                     }                    // END NAVIGATION
 
 
@@ -405,6 +405,9 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
 
                     /* Lifter Motor Power   */
                         riser.setPower(riserCmd);
+
+                        /* loader command */
+                        loader.setPower(loaderCmd);
                     }
 
 
