@@ -20,17 +20,16 @@ package org.firstinspires.ftc.teamcode;
         import com.qualcomm.robotcore.util.Range;
 
         import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
-
+*/
 //import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
-
-/**
- */
+/*Made by Tarun and John*/
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
@@ -51,6 +50,8 @@ public class Generic_Atonomous extends LinearOpMode {
     DcMotor[] leftMotors = new DcMotor[]{robot.leftDrive};
     DcMotor[] rightMotors = new DcMotor[]{robot.rightDrive};
     Drive myDrive = new Drive(leftMotors, rightMotors);
+    TouchSensor touchSensor;
+    //touchSensor = hardwareMap.get(TouchSensor.class, "sensor_touch");
     //   private static final double COUNTS_PER_MOTOR_REV = 1440;    // eg: TETRIX Motor Encoder
     //   private static final double DRIVE_GEAR_REDUCTION = 2.0;     // This is < 1.0 if geared UP
     //   private static final double WHEEL_DIAMETER_INCHES = 4.0;     // For figuring circumference
@@ -151,9 +152,9 @@ public class Generic_Atonomous extends LinearOpMode {
         long liftOffDuration = 0;
 
         // variables for controller inputs.
-        //float g1_leftX;
+        float g1_leftX;
         float g1_LeftY;
-        //float g1_RightX;
+        float g1_RightX;
         float g1_RightY;
         int g1_A_Counts = 0;
 
@@ -166,6 +167,7 @@ public class Generic_Atonomous extends LinearOpMode {
         float leftDriveCmd = 0;
         float rightDriveCmd = 0;
         float riserCmd = 0;
+        /*{ , , , , , */
         int[] TurnArray =    {0, 45,  0,   2, 0,0};
         int[] TurnPower =  {0, 40,  0, -30, 0,0};
         float[] StraightPwr= {25, 0, 30,   0, 0,0};
@@ -188,7 +190,8 @@ public class Generic_Atonomous extends LinearOpMode {
         waitForStart();
         runtime.reset();
   /* ***********************************************************************************************
-   *****************************                CODE          ************************************
+   *****************************                CODE          ****************
+********************
    ************************************************************************************************/
 
 
