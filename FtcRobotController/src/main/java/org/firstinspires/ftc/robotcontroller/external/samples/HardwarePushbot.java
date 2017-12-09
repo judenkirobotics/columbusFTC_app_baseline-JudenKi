@@ -30,8 +30,10 @@
 package org.firstinspires.ftc.robotcontroller.external.samples;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 /**
@@ -53,15 +55,14 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 public class HardwarePushbot
 {
     /* Public OpMode members. */
-    public DcMotor  leftDrive   = null;
-    public DcMotor  rightDrive  = null;
-    public DcMotor  leftArm     = null;
-    public Servo    leftClaw    = null;
-    public Servo    rightClaw   = null;
+    public DcMotor     leftDrive      = null;
+    public DcMotor     rightDrive     = null;
+    public DcMotor     rampMotor      = null;
+    public TouchSensor extensionTouch = null;  // Ramp Deployment
+    public DcMotor     extensionMotor = null;
+    public DcMotor     loaderMotor    = null;
+    public GyroSensor  gyro           = null;
 
-    public static final double MID_SERVO       =  0.5 ;
-    public static final double ARM_UP_POWER    =  0.45 ;
-    public static final double ARM_DOWN_POWER  = -0.45 ;
 
     /* local OpMode members. */
     HardwareMap hwMap           =  null;
@@ -80,26 +81,37 @@ public class HardwarePushbot
         // Define and Initialize Motors
         leftDrive  = hwMap.get(DcMotor.class, "left_drive");
         rightDrive = hwMap.get(DcMotor.class, "right_drive");
-        leftArm    = hwMap.get(DcMotor.class, "left_arm");
+        rampMotor  = hwMap.get(DcMotor.class, "beltmotor");
+        loaderMotor= hwMap.get(DcMotor.class, "loadermotor");
+        extensionMotor = hwMap.get(DcMotor.class, "pullymotor");
+        //leftArm    = hwMap.get(DcMotor.class, "left_arm");
         leftDrive.setDirection(DcMotor.Direction.FORWARD); // Set to REVERSE if using AndyMark motors
         rightDrive.setDirection(DcMotor.Direction.REVERSE);// Set to FORWARD if using AndyMark motors
+        rampMotor.setDirection(DcMotor.Direction.FORWARD);
+        loaderMotor.setDirection(DcMotor.Direction.FORWARD);
+        extensionMotor.setDirection(DcMotor.Direction.FORWARD);
 
         // Set all motors to zero power
         leftDrive.setPower(0);
         rightDrive.setPower(0);
-        leftArm.setPower(0);
+        rampMotor.setPower(0);
+        loaderMotor.setPower(0);
+        extensionMotor.setPower(0);
+
 
         // Set all motors to run without encoders.
         // May want to use RUN_USING_ENCODERS if encoders are installed.
         leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftArm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rampMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        loaderMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        extensionMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        // Define and initialize ALL installed servos.
-        leftClaw  = hwMap.get(Servo.class, "left_hand");
-        rightClaw = hwMap.get(Servo.class, "right_hand");
-        leftClaw.setPosition(MID_SERVO);
-        rightClaw.setPosition(MID_SERVO);
+
+
+        //Define and Initialize Sensors
+        gyro = hwMap.get(GyroSensor.class, "gyro");
+        extensionTouch = hwMap.get(TouchSensor.class, "ext_touch");
     }
  }
 

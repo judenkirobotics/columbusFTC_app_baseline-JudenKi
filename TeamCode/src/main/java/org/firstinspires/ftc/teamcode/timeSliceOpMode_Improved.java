@@ -37,6 +37,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
@@ -48,7 +49,6 @@ import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
 //@Autonomous(name="Time Slide Op Mode", group="Pushbot")
 @SuppressWarnings("WeakerAccess")
 @TeleOp(name = "Time Slice Op Mode Improved", group = "K9Bot")
-//@Disabled
 public class timeSliceOpMode_Improved extends LinearOpMode {
 
     /* Declare OpMode members. */
@@ -63,35 +63,11 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
     //   private static final double TURN_SPEED = 0.5;
 
 
-    /* Public OpMode members. */
-    private DcMotor leftDrive = null;
-    private DcMotor rightDrive = null;
-    private DcMotor riser = null;
-    private DcMotor loader = null;
 
-    DigitalChannel digitalTouch;  // Hardware Device Object
+
 
 
     // Define class members
-    public Servo leftClamp = null;
-    public Servo rightClamp = null;
-
-    //  static final double INCREMENT = 0.01;     // amount to slew servo each CYCLE_MS cycle
-    //  static final int CYCLE_MS = 50;     // period of each cycle
-    //  static final double MAX_POS = 1.0;     // Maximum rotational position
-//    static final double MIN_POS = 0.0;     // Minimum rotational position
-    static final double LEFTCLAMPED = 45;
-    static final double LEFTUNCLAMPED = -5;
-    static final double RIGHTCLAMPED = 5;
-    static final double RIGHTUNCLAMPED = -45;
-    static boolean liftComplete = false;
-    static boolean rampLimit = false;
-
-    static final double CLAMP_MOTION_TIME = 250;
-
-    //double clampOffset = 0;                       // Servo mid position
-    //final double CLAMP_SPEED = 0.02;                   // sets rate to move servo
-
     final long SENSORPERIOD = 50;
     final long ENCODERPERIOD = 50;
     final long SERVOPERIOD = 50;
@@ -105,12 +81,10 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
     final double DERGAIN = 0.1;
     final long PIDMAXDUR = 3;
 
-    final int RISER_DISTANCE = 500;
 
     int rightMotorPos;
     int lefMotorPos;
-    int riserMotorPos;
-    int prevRiserErr = 0;
+
 
     //double position = (MAX_POS - MIN_POS) / 2; // Start at halfway position
 
@@ -137,58 +111,78 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
         telemetry.addData("Status", "Resetting Encoders");    //
         telemetry.update();
 
-        long CurrentTime = System.currentTimeMillis();
-
-        long LastSensor = CurrentTime;
+        //Time keeping, prime the variables
+        long CurrentTime     = System.currentTimeMillis();
+        long LastSensor      = CurrentTime;
         long LastEncoderRead = CurrentTime + 5;
-        long LastServo = CurrentTime + 10;
-        long LastNav = CurrentTime + 15;
-        long LastMotor = CurrentTime + 20;
-        long LastController = CurrentTime + 7;
-        long LastTelemetry = CurrentTime + 17;
-
-        long DigitalTouch;
-
-        long liftDuration = 0;
-        long liftOffDuration = 0;
-
-        // variables for controller inputs.
-        //float g1_leftX;
-        float g1_LeftY;
-        //float g1_RightX;
-        float g1_RightY;
-        int g1_A_Counts = 0;
-
-        double leftClamp_Cmd = LEFTUNCLAMPED;
-        double rightClamp_Cmd = RIGHTUNCLAMPED;
-
-        float leftDriveCmd = 0;
-        float rightDriveCmd = 0;
-        float riserCmd = 0;
-        float loaderCmd = 0;
-
-        boolean g1_A;
-        boolean g1_B;
-
-        // variables to support clamp and lift
-        //long clampStart = 0;
-        //long liftStart = 0;
+        long LastServo       = CurrentTime + 10;
+        long LastNav         = CurrentTime + 15;
+        long LastMotor       = CurrentTime + 20;
+        long LastController  = CurrentTime + 7;
+        long LastTelemetry   = CurrentTime + 17;
 
 
-        //double legTime = CurrentTime;
-        //double lastTelemetry = CurrentTime;
-        //double timeLeft = 0;
+        // variables to store controller inputs.
+        float g1_LeftX     = 0;
+        float g1_LeftY     = 0;
+        float g1_RightX    = 0;
+        float g1_RightY    = 0;
+        boolean g1_A       = false;
+        boolean g1_B       = false;
+        boolean g1_X       = false;
+        boolean g1_Y       = false;
+        boolean g1_LB      = false;
+        boolean g1_RB      = false;
+        float   g1_LT      = 0;
+        float   g1_RT      = 0;
+        boolean g1_DU      = false;
+        boolean g1_DD      = false;
+        boolean g1_DL      = false;
+        boolean g1_DR      = false;
+
+        float g2_LeftX     = 0;
+        float g2_LeftY     = 0;
+        float g2_RightX    = 0;
+        float g2_RightY    = 0;
+        boolean g2_A       = false;
+        boolean g2_B       = false;
+        boolean g2_X       = false;
+        boolean g2_Y       = false;
+        boolean g2_LB      = false;
+        boolean g2_RB      = false;
+        float   g2_LT      = 0;
+        float   g2_RT      = 0;
+        boolean g2_DU      = false;
+        boolean g2_DD      = false;
+        boolean g2_DL      = false;
+        boolean g2_DR      = false;
+
+
+        // Variables to store actuator commands
+        double leftDriveCmd       = 0;
+        double rightDriveCmd      = 0;
+        double loaderMotorCmd     = 0;
+        double rampMotorCmd       = 0;
+        double extensionMotorCmd  = 0;
+
+        // State variables
+        boolean rampDeployed = false;  //make sticky
+        boolean rampBackoff  = false;  // make sticky
+        int     extensionCount = 0;
+        int     backoffCount   = 5;    //Backoff for five ticks
+
+
+
+
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
         ElapsedTime runtime = new ElapsedTime();
-        //DcMotor leftMotor = null;
-        //DcMotor rightMotor = null;
 
         //A Timing System By Katherine Jeffrey,and Alexis
         // long currentThreadTimeMillis (0);
         //
-        int riserZero = riser.getCurrentPosition();
+
 
         // Wait for the game to start (driver presses PLAY)
 
@@ -217,26 +211,19 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
                 LastSensor = CurrentTime;
                 // no sensors at this time.  If we add some, change this comment.public void runOpMode() {
 
-                // get a reference to our digitalTouch object.
-                digitalTouch = hardwareMap.get(DigitalChannel.class, "sensor_digital");
 
-                // set the digital channel to input.
-                digitalTouch.setMode(DigitalChannel.Mode.INPUT);
 
-                // wait for the start button to be pressed.
+                // wait for the start button to be pressed.   ????? WHy here ?????
                 waitForStart();
 
-                // while the op mode is active, loop and read the light levels.
-                // Note we use opModeIsActive() as our loop condition because it is an interruptible method.
 
                     // send the info back to driver station using telemetry function.
                     // if the digital channel returns true it's HIGH and the button is unpressed.
-                if (digitalTouch.getState() == true) {
-                    rampLimit = true;
-                    telemetry.addData("Digital Touch", "Is Not Pressed");
+                if (robot.extensionTouch.isPressed()) {
+                    telemetry.addData("Ramp Extension", "Is Pressed");
+                    rampDeployed = true;
                 } else {
-                    rampLimit = false;
-                    telemetry.addData("Digital Touch", "Is Pressed");
+                    telemetry.addData("Ramp Extension", "Is Not Pressed");
                 }
 
 
@@ -246,10 +233,9 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
                 if (CurrentTime - LastEncoderRead > ENCODERPERIOD) {
                     LastEncoderRead = CurrentTime;
                     // We want to READ the Encoders here
-                    //    ONLY set the motors in motion in ONE place.
-                    rightMotorPos = rightDrive.getCurrentPosition();
-                    lefMotorPos = leftDrive.getCurrentPosition();
-                    //riserMotorPos = riser.getCurrentPosition();
+                    //    ONLY set the motors in motion in ONE place.ROG
+                    rightMotorPos = robot.rightDrive.getCurrentPosition();
+                    lefMotorPos   = robot.leftDrive.getCurrentPosition();
 
                 }
             /* **************************************************
@@ -263,19 +249,40 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
              ****************************************************/
                 if (CurrentTime - LastController > CONTROLLERPERIOD) {
                     LastController = CurrentTime;
-                    //g1_leftX = gamepad1.left_stick_x;
+                    g1_LeftX = gamepad1.left_stick_x;
                     g1_LeftY = gamepad1.left_stick_y;
-                    //g1_RightX = gamepad1.right_stick_x;
+                    g1_RightX = gamepad1.right_stick_x;
                     g1_RightY = gamepad1.right_stick_y;
 
-                    // do a little debounce on gamepad1.a so we don't drop the block accidentally
-                    // 6 counts at 30 milliseconds will delay things by 180 ms, but that allows
-                    // a flaky controller or a jittery operator. Splitting out the sensor "reads"
-                    // from the rest of the logic let's us do this here, rather than muddling up
-                    // the main logic of a more abstract, more complicated piece of code.
-                    g1_A_Counts = Range.clip((gamepad1.a) ? g1_A_Counts + 1 : g1_A_Counts - 1, 0, 12);
-                    g1_A = (g1_A_Counts >= 6);
-                    g1_B = gamepad1.b;
+                    //Get controlle inputs for buttons and bumpers, may need to
+                    //add debounce if spurious button push would cause bad
+                    //performance.
+                    g1_A  = gamepad1.a;
+                    g1_B  = gamepad1.b;
+                    g1_X  = gamepad1.x;
+                    g1_Y  = gamepad1.y;
+                    g1_DD = gamepad1.dpad_down;
+                    g1_DL = gamepad1.dpad_left;
+                    g1_DR = gamepad1.dpad_right;
+                    g1_DU = gamepad1.dpad_up;
+                    g1_RB = gamepad1.right_bumper;
+                    g1_LB = gamepad1.left_bumper;
+                    g1_RT = gamepad1.right_trigger;
+                    g1_LT = gamepad1.left_trigger;
+
+                    g2_A  = gamepad2.a;
+                    g2_B  = gamepad2.b;
+                    g2_X  = gamepad2.x;
+                    g2_Y  = gamepad2.y;
+                    g2_DD = gamepad2.dpad_down;
+                    g2_DL = gamepad2.dpad_left;
+                    g2_DR = gamepad2.dpad_right;
+                    g2_DU = gamepad2.dpad_up;
+                    g2_RB = gamepad2.right_bumper;
+                    g2_LB = gamepad2.left_bumper;
+                    g2_RT = gamepad2.right_trigger;
+                    g2_LT = gamepad2.left_trigger;
+
         /*  ***********************************************************************
          ^^^^^^^^^^^^^ ALL OF THE STUFF ABOVE HERE IS READING INPUTS ^^^^^^^^^^^^^^^
          ***************************************************************************/
@@ -297,50 +304,19 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
 
                         // init drive min and max to default values.  We'll reset them to other numbers
                         // if conditions demand it.
-                        float driveMax = 1;
-                        float driveMin = -1;
-                        float riserMax = 1;
-                        float riserMin = -1;
-                        float loaderMax = 1;
-                        float loaderMin = -1;
-                        float riserCmdRaw = 0;
-                        float loaderCmdRaw = 0;
-                        double riserTarget = 0;
+                        double driveMax      = 1;
+                        double driveMin      = -1;
+                        double rampMin       = -0.7;
+                        double rampMax       = 0.7;
+                        double extensionMin  = -1;
+                        double extensionMax  =  1;
+                        double feederMin     = -1;
+                        double feederMax     =  1;
 
 
-                        // mapping inputs to servo command
-                        if (g1_A) {
-                            // apply a limit to motor speed while the lift operation is in process
-                            driveMax = (float) 0.5;
-                            driveMin = (float) -0.5;
-                            liftDuration += NAVPERIOD;
-                            if ((liftDuration > CLAMP_MOTION_TIME) || (rampLimit)) {
-                               // shut it down
-                                liftComplete = true;
-                                driveMax = (float)1.0;
-                                driveMin = (float)-1.0;
-                                riserMax = 0;
-                                riserMin = (float)-0.2;
-                                riserCmdRaw = (float)-0.2;
-                            }
-                            else {
-                                driveMax = (float) 0.3;
-                                driveMin = (float) -0.3;
-                                riserCmdRaw = (float)0.2;
-                            }
-                        } else {
-                            driveMax = (float) 0.2;
-                            driveMin = (float) -0.1;
-                            riserCmdRaw = (float)0.0;
-                        }
-                        if (g1_B) {
-                            // drive the conveyor motor up
-                            loaderCmdRaw = (float)0.3;
-                        }
-                        else
-                        {
-                            loaderCmdRaw = (float)0.0;
-                        }
+
+
+
                         // mapping inputs to motor commands - cube them to desensetize them around
                         // the 0,0 point.  Switching to single stick operation ought to be pretty
                         // straightforward, if that's desired.  Using 2 sticks was simpler to
@@ -354,8 +330,45 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
                         // I aligned them this way to make it REALLY clear what's going on.
                         leftDriveCmd = Range.clip(g1_LeftY, driveMin, driveMax);
                         rightDriveCmd = Range.clip(g1_RightY, driveMin, driveMax);
-                        riserCmd = Range.clip(riserCmdRaw, riserMin, riserMax);
-                        loaderCmd = Range.clip(loaderCmdRaw, loaderMin,loaderMax);
+
+                        //Set loader motors to no power, if either trigger is pressed change power
+                        loaderMotorCmd    = 0;
+                        if (g2_LT > 0) {
+                            loaderMotorCmd = feederMax;
+                        }
+                        if (g2_RT > 0) {
+                            loaderMotorCmd = feederMin;
+                        }
+
+
+                        //Set ramp motord to no power, if either trigger is pressed change power
+                        rampMotorCmd      = 0;
+                        if (g2_A) {
+                            rampMotorCmd = rampMax;
+                        }
+                        if (g2_B) {
+                            rampMotorCmd = rampMin;
+                        }
+
+
+                        //Only energize the extension motor if the state indicates it is not
+                        //deployed
+                        extensionMotorCmd = 0;
+                        if (rampDeployed == false) {
+                            if (g2_RB) {
+                                extensionMotorCmd = extensionMax;
+                            }
+                        }
+                        // Backoff the extension motor to reduce tension in frame
+                        if ((rampDeployed == true) && (rampBackoff == false)) {
+                            extensionCount = extensionCount +1;
+                            if (extensionCount > backoffCount) {
+                                rampBackoff = true;
+                            }
+                            extensionMotorCmd = extensionMin;
+                        }
+
+
                     }                    // END NAVIGATION
 
 
@@ -378,10 +391,8 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
              ****************************************************/
                     if (CurrentTime - LastServo > SERVOPERIOD) {
                         LastServo = CurrentTime;
+                        // No servos on the robot
 
-                        // Move both servos to new position.
-                        leftClamp.setPosition(leftClamp_Cmd);
-                        rightClamp.setPosition(rightClamp_Cmd);
                     }
 
 
@@ -394,17 +405,20 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
                         LastMotor = CurrentTime;
                         // Yes, we'll set the power each time, even if it's zero.
                         // this way we don't accidentally leave it somewhere.  Just simpler this way.
-                    /*  Left Drive Motor Power  */
-                        leftDrive.setPower(leftDriveCmd);
+                        //robot.leftDrive.setPower(leftDriveCmd);
+                        //robot.rightDrive.setPower(rightDriveCmd);
 
-                    /*  Right Drive Motor Power */
-                        rightDrive.setPower(rightDriveCmd);
+                        // kludge fix for motor mapping
+                        rightDriveCmd = (float)-1*rightDriveCmd;
+                        leftDriveCmd = (float)-1*leftDriveCmd;
+                        robot.leftDrive.setPower(rightDriveCmd);
+                        robot.rightDrive.setPower(leftDriveCmd);
 
-                    /* Lifter Motor Power   */
-                        riser.setPower(riserCmd);
+                        robot.extensionMotor.setPower(extensionMotorCmd);
+                        robot.rampMotor.setPower(rampMotorCmd);
+                        robot.loaderMotor.setPower(loaderMotorCmd);
 
-                        /* loader command */
-                        loader.setPower(loaderCmd);
+
                     }
 
 
@@ -420,9 +434,27 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
                     }
                 }
 
-                telemetry.addData("Path", "Complete");
+                telemetry.addData("Left Motor Power:       ", leftDriveCmd);
+                telemetry.addData("Right Motor Power:      ", rightDriveCmd);
+                telemetry.addData("Ramp Motor Power:       ", rampMotorCmd);
+                telemetry.addData("Loader Motor Power:     ", loaderMotorCmd);
+                telemetry.addData("Extension Motor Power:  ", extensionMotorCmd);
+                telemetry.addData("Left Trigger  ", g1_LT);
+                telemetry.addData("Right Trigger ", g1_RT);
+                telemetry.addData("Left Bumper   ", g1_LB);
+                telemetry.addData("Right Bumper  ", g1_RB);
+                telemetry.addData("A             ", g1_A);
+                telemetry.addData("B             ", g1_B);
                 telemetry.update();
             }
         }
+
+        //  NEED TO ADD CODE TO FORCE ALL ACTUATORS INTO A SHUTDOWN STATE
+        robot.leftDrive.setPower(0);
+        robot.rightDrive.setPower(0);
+        robot.extensionMotor.setPower(0);
+        robot.rampMotor.setPower(0);
+        robot.loaderMotor.setPower(0);
+
     }
 }
