@@ -395,8 +395,8 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
                 //robot.rightDrive.setPower(rightDriveCmd);
 
                 // kludge fix for motor mapping
-                rightDriveCmd = (float)-1*rightDriveCmd;
-                leftDriveCmd = (float)-1*leftDriveCmd;
+                //rightDriveCmd = (float)-1*rightDriveCmd;
+                //leftDriveCmd = (float)-1*leftDriveCmd;
                 robot.leftDrive.setPower(rightDriveCmd);
                 robot.rightDrive.setPower(leftDriveCmd);
 

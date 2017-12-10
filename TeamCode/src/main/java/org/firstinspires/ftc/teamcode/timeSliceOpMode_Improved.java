@@ -212,21 +212,19 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
                 // no sensors at this time.  If we add some, change this comment.public void runOpMode() {
 
 
-
                 // wait for the start button to be pressed.   ????? WHy here ?????
                 waitForStart();
 
 
-                    // send the info back to driver station using telemetry function.
-                    // if the digital channel returns true it's HIGH and the button is unpressed.
+                // send the info back to driver station using telemetry function.
+                // if the digital channel returns true it's HIGH and the button is unpressed.
                 if (robot.extensionTouch.isPressed()) {
                     telemetry.addData("Ramp Extension", "Is Pressed");
                     rampDeployed = true;
                 } else {
                     telemetry.addData("Ramp Extension", "Is Not Pressed");
                 }
-
-
+            }
             /* ***************************************************
              *                ENCODERS                          *
              ****************************************************/
@@ -253,7 +251,7 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
                     g1_LeftY = gamepad1.left_stick_y;
                     g1_RightX = gamepad1.right_stick_x;
                     g1_RightY = gamepad1.right_stick_y;
-
+                    g2_RightY = gamepad2.right_stick_y;
                     //Get controlle inputs for buttons and bumpers, may need to
                     //add debounce if spurious button push would cause bad
                     //performance.
@@ -306,8 +304,8 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
                         // if conditions demand it.
                         double driveMax      = 1;
                         double driveMin      = -1;
-                        double rampMin       = -0.7;
-                        double rampMax       = 0.7;
+                        double rampMin       = -0.4;
+                        double rampMax       = 0.4;
                         double extensionMin  = -1;
                         double extensionMax  =  1;
                         double feederMin     = -1;
@@ -342,14 +340,15 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
 
 
                         //Set ramp motord to no power, if either trigger is pressed change power
-                        rampMotorCmd      = 0;
+                       /* rampMotorCmd      = 0;
                         if (g2_A) {
                             rampMotorCmd = rampMax;
                         }
                         if (g2_B) {
                             rampMotorCmd = rampMin;
                         }
-
+*/
+                       rampMotorCmd = g2_RightY;
 
                         //Only energize the extension motor if the state indicates it is not
                         //deployed
@@ -409,8 +408,8 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
                         //robot.rightDrive.setPower(rightDriveCmd);
 
                         // kludge fix for motor mapping
-                        rightDriveCmd = (float)-1*rightDriveCmd;
-                        leftDriveCmd = (float)-1*leftDriveCmd;
+                        //rightDriveCmd = (float)-1*rightDriveCmd;
+                        //leftDriveCmd = (float)-1*leftDriveCmd;
                         robot.leftDrive.setPower(rightDriveCmd);
                         robot.rightDrive.setPower(leftDriveCmd);
 
@@ -446,15 +445,17 @@ public class timeSliceOpMode_Improved extends LinearOpMode {
                 telemetry.addData("A             ", g1_A);
                 telemetry.addData("B             ", g1_B);
                 telemetry.update();
-            }
-        }
-
+            }// end while opmode is active
         //  NEED TO ADD CODE TO FORCE ALL ACTUATORS INTO A SHUTDOWN STATE
         robot.leftDrive.setPower(0);
         robot.rightDrive.setPower(0);
         robot.extensionMotor.setPower(0);
         robot.rampMotor.setPower(0);
         robot.loaderMotor.setPower(0);
+
+
+
+
 
     }
 }
