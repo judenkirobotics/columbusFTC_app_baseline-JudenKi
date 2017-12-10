@@ -299,7 +299,7 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
                 int extensionMaxTime = 1350;  //milliseconds
 
                 switch ( CurrentAutoState ) {
-                    case 0:
+                    case 0: // extend the ramp!
                         extensionMotorCmd = extendRamp(rampLimitReached);
 
                         // extens..Time != stageTime. It tells how long the ramp was extended. Persistent
@@ -310,7 +310,7 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
                             stageComplete = true;
                         }
                         break;
-                    case 1: case 3:
+                    case 1: case 3: // turn
                         /* gyroturn5
                          *  startHeading  - input. heading when this "state" started
                          *  currHeading   - input. what is the heading when gt5 invoked
@@ -330,8 +330,7 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
                             stageComplete = true;
                         }
                         break;
-                    case 2:
-                        //
+                    case 2: // go straight
                         float motorCommands = forwardMove( StraightDist[CurrentAutoState],StraightPwr[CurrentAutoState]);
                         if ((stageTime >= 3000) ||
                             (motorCommands == 0))
@@ -354,7 +353,16 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
 
                         break;
                     case 5:
-                        stageComplete = moveLever();
+                        stageComplete = true;
+                        break;
+                    default:
+                        //stageComplete = true;
+                        leftDriveCmd      = 0;
+                        rightDriveCmd     = 0;
+                        extensionMotorCmd = 0;
+                        rampMotorCmd      = 0;
+                        loaderMotorCmd    = 0;
+
                         break;
                 }
                 if (stageComplete) {
