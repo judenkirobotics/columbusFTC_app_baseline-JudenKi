@@ -205,12 +205,7 @@ public class JK_DriverOpMode extends LinearOpMode {
              ****************************************************/
             if (CurrentTime - LastSensor > SENSORPERIOD) {
                 LastSensor = CurrentTime;
-                // no sensors at this time.  If we add some, change this comment.public void runOpMode() {
-
-
-                // wait for the start button to be pressed.   ????? WHy here ?????
-                waitForStart();
-
+                //waitForStart();
 
                 // send the info back to driver station using telemetry function.
                 // if the digital channel returns true it's HIGH and the button is unpressed.
@@ -248,7 +243,7 @@ public class JK_DriverOpMode extends LinearOpMode {
                     g1_RightX = gamepad1.right_stick_x;
                     g1_RightY = gamepad1.right_stick_y;
                     g2_RightY = gamepad2.right_stick_y;
-                    //Get controlle inputs for buttons and bumpers, may need to
+                    //Get controller inputs for buttons and bumpers, may need to
                     //add debounce if spurious button push would cause bad
                     //performance.
                     g1_A  = gamepad1.a;
@@ -307,17 +302,12 @@ public class JK_DriverOpMode extends LinearOpMode {
                         double feederMin     = -1;
                         double feederMax     =  1;
 
-
-
-
-
                         // mapping inputs to motor commands - cube them to desensetize them around
                         // the 0,0 point.  Switching to single stick operation ought to be pretty
                         // straightforward, if that's desired.  Using 2 sticks was simpler to
                         // code up in a hurry.
                         g1_LeftY = g1_LeftY * g1_LeftY * g1_LeftY;
                         g1_RightY = g1_RightY * g1_RightY * g1_RightY;
-
 
                         // The ONLY place we set the motor power variables. Set them here, and
                         // we will never have to worry about which set is clobbering the other.
@@ -343,7 +333,7 @@ public class JK_DriverOpMode extends LinearOpMode {
                         if (g2_B) {
                             rampMotorCmd = rampMin;
                         }
-*/
+                       */
                        rampMotorCmd = g2_RightY;
 
                         //Only energize the extension motor if the state indicates it is not
@@ -387,7 +377,6 @@ public class JK_DriverOpMode extends LinearOpMode {
                     if (CurrentTime - LastServo > SERVOPERIOD) {
                         LastServo = CurrentTime;
                         // No servos on the robot
-
                     }
 
 

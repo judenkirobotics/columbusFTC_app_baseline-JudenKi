@@ -50,7 +50,7 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
     DcMotor[] leftMotors = new DcMotor[]{robot.leftDrive};
     DcMotor[] rightMotors = new DcMotor[]{robot.rightDrive};
     Drive myDrive = new Drive(leftMotors, rightMotors);
-    TouchSensor touchSensor;
+    //TouchSensor touchSensor;
     GyroSensor myGyro;
     //touchSensor = hardwareMap.get(TouchSensor.class, "sensor_touch");
     //   private static final double COUNTS_PER_MOTOR_REV = 1440;    // eg: TETRIX Motor Encoder
@@ -68,23 +68,22 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
     private DcMotor riser = null;
 
     // Define class members
-    public Servo leftClamp = null;
-    public Servo rightClamp = null;
+    //public Servo leftClamp = null;
+    //public Servo rightClamp = null;
 
     //  static final double INCREMENT = 0.01;     // amount to slew servo each CYCLE_MS cycle
     //  static final int CYCLE_MS = 50;     // period of each cycle
     //  static final double MAX_POS = 1.0;     // Maximum rotational position
 //    static final double MIN_POS = 0.0;     // Minimum rotational position
-    static final double LEFTCLAMPED = 45;
-    static final double LEFTUNCLAMPED = -5;
-    static final double RIGHTCLAMPED = 5;
-    static final double RIGHTUNCLAMPED = -45;
+    //static final double LEFTCLAMPED = 45;
+    //static final double LEFTUNCLAMPED = -5;
+    //static final double RIGHTCLAMPED = 5;
+    //static final double RIGHTUNCLAMPED = -45;
 
-    static final double CLAMP_MOTION_TIME = 250;
+    //static final double CLAMP_MOTION_TIME = 250;
 
     //double clampOffset = 0;                       // Servo mid position
     //final double CLAMP_SPEED = 0.02;                   // sets rate to move servo
-    final int  AUTO_STATES = 4;
     final long SENSORPERIOD = 50;
     final long ENCODERPERIOD = 50;
     final long SERVOPERIOD = 50;
@@ -95,10 +94,10 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
 
     final long MAX_MOVE_TIME = 4000;
 
-    final double PROPGAIN = 0.6;
-    final double INTGAIN  = 0.3;
-    final double DERGAIN  = 0.1;
-    final long PIDMAXDUR  = 3;
+    //final double PROPGAIN = 0.6;
+    //final double INTGAIN  = 0.3;
+    //final double DERGAIN  = 0.1;
+    //final long PIDMAXDUR  = 3;
 
     int CurrentAutoState = 0;
     int rightMotorPos;
@@ -108,7 +107,7 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
 
     //double position = (MAX_POS - MIN_POS) / 2; // Start at halfway position
 
-    public double simplePID (double err, double duration, double prevErr)
+    /*public double simplePID (double err, double duration, double prevErr)
     {
         double pidmin = -.7;
         double pidmax = 0.7;
@@ -121,15 +120,15 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
         double intTerm = Range.clip(duration/PIDMAXDUR,pidmin,pidmax)*INTGAIN;
         double derTerm = Range.clip((err - prevErr),pidmin,pidmax) * DERGAIN;
         return (Range.clip(propTerm + intTerm + derTerm, pidmin,pidmax));
-    }
-    public boolean detectItem() {
+    }*/
+    //public boolean detectItem() {
         // presuming there will be a detect item here ... populate this code when we know that
-        return true;
-    }
-    public boolean moveLever() {
+    //    return true;
+    //}
+    //public boolean moveLever() {
         // presuming we will move a lever somehow.  Populate this method when that is known.
-        return true;
-    }
+    //    return true;
+    //}
     float extendRamp(boolean rampDeployed) {
         float extensionMin  = (float)-0.7;
         float extensionMax  =  (float)0.7;
@@ -144,12 +143,7 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
         }
         return extensionMotorCmd;
     }
-    float forwardMove(int cmdDist, float cmdPwr )
-    {
-        float driveMotorCmd = 0;
 
-        return driveMotorCmd;
-    }
     @Override
 
     public void runOpMode() {
@@ -171,7 +165,7 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
         long LastServo = CurrentTime + 10;
         long LastNav = CurrentTime + 15;
         long LastMotor = CurrentTime + 20;
-        long LastController = CurrentTime + 7;
+        //long LastController = CurrentTime + 7;
         long LastTelemetry = CurrentTime + 17;
 
 /*        long liftDuration = 0;
@@ -213,7 +207,6 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
         //A Timing System By Katherine Jeffrey,and Alexis
         // long currentThreadTimeMillis (0);
         //
-        int riserZero = riser.getCurrentPosition();
 
         // Wait for the game to start (driver presses PLAY)
 
@@ -260,8 +253,10 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
                 LastEncoderRead = CurrentTime;
                 // We want to READ the Encoders here
                 //    ONLY set the motors in motion in ONE place.
-                rightMotorPos = robot.rightDrive.getCurrentPosition();
-                leftMotorPos  = robot.leftDrive.getCurrentPosition();
+                //rightMotorPos = robot.rightDrive.getCurrentPosition();
+                //leftMotorPos  = robot.leftDrive.getCurrentPosition();
+                leftMotorPos  = robot.rightDrive.getCurrentPosition();
+                rightMotorPos = robot.leftDrive.getCurrentPosition();
 
             }
              /*         NO CONTROLLER INPUT FOR AUTONOMOUS       *
