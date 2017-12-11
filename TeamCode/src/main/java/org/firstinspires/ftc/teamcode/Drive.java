@@ -5,8 +5,9 @@
         import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
         import com.qualcomm.robotcore.hardware.DcMotor;
         import com.qualcomm.robotcore.hardware.GyroSensor;
+        import com.qualcomm.robotcore.util.Range;
 
-/**
+        /**
  * Created by judenki on 11/12/16.
  *
  * NEED TO DO;
@@ -65,7 +66,7 @@ public class Drive {
      *   Note: The gyroturn5 will quit after MAX_TURN_TIME, and will give a "bump" to increase turn
      *   power after BUMP_TIME.  The idea is to juice the power
      */
-    public static float gyroTurn5(int startHeading, int currHeading, int newHeading, int turnPwr, float turnTime){
+    public float gyroTurn5(int startHeading, int currHeading, int newHeading, int turnPwr, float turnTime){
         float pwrSet = turnPwr;
         int accumTurn = Math.abs(startHeading - currHeading);
         accumTurn = (accumTurn > 360)? (360-accumTurn):accumTurn;
@@ -164,6 +165,23 @@ public class Drive {
 
     }
 
+            /*****************************************************
+             * Fwd5 - a simplified forward Drive for autonomous
+             * double traveled
+             * double goal
+             * float pwr
+             * double duration
+             * @return - commanded power.  Do this once for each motor
+             */
+    public float Fwd5(double traveled,double goal,float pwr, double duration)
+    {
+        float multiplier = (duration > 2000)? (float)1.2:(float)1.0;
+
+        float cmdPwr = 0;
+        if (traveled < goal) cmdPwr = pwr*multiplier/(float)100.0;
+        cmdPwr = Range.clip(cmdPwr, -1, 1);
+        return cmdPwr;
+    }
 
     public boolean moveForward(double startPos, double distance , double power) {
 

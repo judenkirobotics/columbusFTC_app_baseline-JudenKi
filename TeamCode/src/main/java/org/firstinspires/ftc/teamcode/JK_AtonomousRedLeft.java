@@ -90,7 +90,7 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
     final long SERVOPERIOD = 50;
     final long NAVPERIOD = 50;
     final long MOTORPERIOD = 50;
-    final long CONTROLLERPERIOD = 50;
+    //final long CONTROLLERPERIOD = 50;
     final long TELEMETRYPERIOD = 1000;
 
     final long MAX_MOVE_TIME = 4000;
@@ -100,12 +100,9 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
     final double DERGAIN  = 0.1;
     final long PIDMAXDUR  = 3;
 
-    final int RISER_DISTANCE = 500;
     int CurrentAutoState = 0;
     int rightMotorPos;
-    int lefMotorPos;
-    int riserMotorPos;
-    int prevRiserErr = 0;
+    int leftMotorPos;
     int rampStressCtr = 0;
     int currentHeading = 0;
 
@@ -115,6 +112,11 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
     {
         double pidmin = -.7;
         double pidmax = 0.7;
+        if (Math.abs(err) < 10){
+            err = 0;
+            duration = 0;
+            prevErr = 0;
+        }
         double propTerm = Range.clip(PROPGAIN * err, pidmin, pidmax);
         double intTerm = Range.clip(duration/PIDMAXDUR,pidmin,pidmax)*INTGAIN;
         double derTerm = Range.clip((err - prevErr),pidmin,pidmax) * DERGAIN;
@@ -172,7 +174,7 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
         long LastController = CurrentTime + 7;
         long LastTelemetry = CurrentTime + 17;
 
-        long liftDuration = 0;
+/*        long liftDuration = 0;
         long liftOffDuration = 0;
 
         // variables for controller inputs.
@@ -180,32 +182,30 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
         float g1_LeftY;
         float g1_RightX;
         float g1_RightY;
-        int g1_A_Counts = 0;
+        int g1_A_Counts = 0;*/
 
         //double leftClamp_Cmd = LEFTUNCLAMPED;
         //double rightClamp_Cmd = RIGHTUNCLAMPED;
-        double loaderMotorCmd     = 0;
-        double rampMotorCmd = 0;
+        double loaderMotorCmd   = 0;
+        double rampMotorCmd     = 0;
 
         float stageTime = 0;
         int startHeading = 0;
-        double startPos = 0;
+        double startLeft = 0;
+        double startRight = 0;
         float leftDriveCmd = 0;
         float rightDriveCmd = 0;
         float extensionMotorCmd = 0;
-        float riserCmd = 0;
         /*{ , , , , ,           0   1   2    3   4  5  6  7  8  9  10*/
         int[] TurnArray =      {0, 45,  0,   2,  0, 0, 0, 0, 0, 0,  0};
         int[] TurnPower =      {0, 40,  0, -30,  0, 0, 0, 0, 0, 0,  0};
         float[] StraightPwr=   {0, 0,  30,   0,  0, 0, 0, 0, 0, 0,  0};
+        double[] StraightDist= {0, 0,  50,   0,  0, 0, 0, 0, 0, 0,  0};
         float[] LoaderPwr =    {0, 0,   0,   1,  0, 0, 0, 0, 0, 0,  0};
         float[] rampMotorPwr = {0, 0,   0,   1,  0, 0, 0, 0, 0, 0,  0};
-        int[] StraightDist=    {0, 0, 50,    0,  0, 0, 0, 0, 0, 0,  0};
         boolean rampLimitReached = false;
         double extensionSwitchTime = 0;
 
-        boolean g1_A;
-        //boolean g1_B;
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
@@ -261,7 +261,7 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
                 // We want to READ the Encoders here
                 //    ONLY set the motors in motion in ONE place.
                 rightMotorPos = robot.rightDrive.getCurrentPosition();
-                lefMotorPos = robot.leftDrive.getCurrentPosition();
+                leftMotorPos  = robot.leftDrive.getCurrentPosition();
 
             }
              /*         NO CONTROLLER INPUT FOR AUTONOMOUS       *
@@ -331,47 +331,55 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
                         }
                         break;
                     case 2: // go straight
-                        float motorCommands = forwardMove( StraightDist[CurrentAutoState],StraightPwr[CurrentAutoState]);
-                        if ((stageTime >= 3000) ||
-                            (motorCommands == 0))
-                        {
+                        double rightDist = Math.abs(rightMotorPos - startRight);
+                        double leftDist  = Math.abs(leftMotorPos  - startLeft);
+                        leftDriveCmd = myDrive.Fwd5(leftDist,StraightDist[CurrentAutoState],StraightPwr[CurrentAutoState],stageTime);
+                        rightDriveCmd = myDrive.Fwd5(rightDist,StraightDist[CurrentAutoState],StraightPwr[CurrentAutoState],stageTime);
+                        if (((leftDriveCmd == 0) && (rightDriveCmd == 0)) || (stageTime > MAX_MOVE_TIME)){
                             stageComplete = true;
-                            leftDriveCmd = motorCommands;
-                            rightDriveCmd = motorCommands;
+                            leftDriveCmd = 0;
+                            rightDriveCmd = 0;
                         }
                         break;
                     case 4: //Pick up the block: Run loader and ramp for <2 second only pick 1 block
+                        leftDriveCmd = 0;
+                        rightDriveCmd = 0;
+
                         if (stageTime < 2000) {
                             loaderMotorCmd = LoaderPwr[CurrentAutoState];
-                            rampMotorCmd = rampMotorPwr[CurrentAutoState];
+                            rampMotorCmd   = rampMotorPwr[CurrentAutoState];
 
-                        }else{
+                        } else{
                             loaderMotorCmd = 0;
-                            rampMotorCmd = 0;
-                            stageComplete = true;
+                            rampMotorCmd   = 0;
+                            stageComplete  = true;
                         }
 
                         break;
                     case 5:
+                        leftDriveCmd  = 0;
+                        rightDriveCmd = 0;
                         stageComplete = true;
                         break;
                     default:
                         //stageComplete = true;
+                        // we've arrived here - either we're done or something has gone badly wrong
+                        stageComplete     = false;
                         leftDriveCmd      = 0;
                         rightDriveCmd     = 0;
-                        extensionMotorCmd = 0;
+                        rampCmd           = 0;
                         rampMotorCmd      = 0;
                         loaderMotorCmd    = 0;
-
                         break;
                 }
                 if (stageComplete) {
                     //startPos = currentPos;
                     startHeading = currentHeading;
-                    //startPos = 0;
-                    //startHeading = 0;
+                    startLeft  = leftMotorPos;
+                    startRight = rightMotorPos;
                     stageTime = 0;
-                    CurrentAutoState++;
+                    CurrentAutoState = Range.clip(CurrentAutoState++,0,1000);
+                    telemetry.addData("Current State: ", CurrentAutoState);
                 }
                 // mapping inputs to servo command
 
