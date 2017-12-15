@@ -47,11 +47,11 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
     //enc = new Encoder(0,1,false,Encoder.EncodingType.k4X);
     /* Declare OpMode members. */
     HardwarePushbot robot   = new HardwarePushbot();   // Use a Pushbot's hardware
-    DcMotor[] leftMotors = new DcMotor[]{robot.leftDrive};
-    DcMotor[] rightMotors = new DcMotor[]{robot.rightDrive};
-    Drive myDrive = new Drive(leftMotors, rightMotors);
+    //DcMotor[] leftMotors = new DcMotor[]{robot.left_Drive};
+    //DcMotor[] rightMotors = new DcMotor[]{robot.right_Drive};
+    //Drive myDrive = new Drive(left_Drive, rightMotors);
     //TouchSensor touchSensor;
-    GyroSensor myGyro;
+    //GyroSensor myGyro;
     //touchSensor = hardwareMap.get(TouchSensor.class, "sensor_touch");
     //   private static final double COUNTS_PER_MOTOR_REV = 1440;    // eg: TETRIX Motor Encoder
     //   private static final double DRIVE_GEAR_REDUCTION = 2.0;     // This is < 1.0 if geared UP
@@ -63,9 +63,9 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
 
 
     /* Public OpMode members. */
-    private DcMotor leftDrive = null;
-    private DcMotor rightDrive = null;
-    private DcMotor riser = null;
+    //private DcMotor left_Drive = null;
+    //private DcMotor right_Drive = null;
+    //private DcMotor riser = null;
 
     // Define class members
     //public Servo leftClamp = null;
@@ -91,6 +91,8 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
     final long MOTORPERIOD = 50;
     //final long CONTROLLERPERIOD = 50;
     final long TELEMETRYPERIOD = 1000;
+    public static final float MAX_TURN_TIME = (float)4000;
+    public static final float BUMP_TIME     = (float)2000;
 
     final long MAX_MOVE_TIME = 4000;
 
@@ -129,9 +131,37 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
         // presuming we will move a lever somehow.  Populate this method when that is known.
     //    return true;
     //}
+    public float gyroTurn5(int startHeading, int currHeading, int newHeading, int turnPwr, float turnTime){
+        float pwrSet = turnPwr;
+        int accumTurn = Math.abs(startHeading - currHeading);
+        accumTurn = (accumTurn > 360)? (360-accumTurn):accumTurn;
+        int cw = (turnPwr < 0)? -1: 1;
+        int transit = (((currHeading > newHeading) && (cw > 0)) ||
+                ((currHeading < newHeading) && (cw < 0))) ?  360 : 0;
+        int desiredRotation = Math.abs(transit + (cw*newHeading) + ((-1*cw)*currHeading));
+        desiredRotation = (desiredRotation > 360) ? desiredRotation - 360 : desiredRotation;
+        if((accumTurn < desiredRotation) && (turnTime < MAX_TURN_TIME)){
+            pwrSet = (turnTime > BUMP_TIME)? (float)turnPwr: (float)1.0;
+        }
+        else
+        {
+            pwrSet = 0;
+        }
+        return pwrSet;
+    }
+    public float Fwd5(double traveled,double goal,float pwr, double duration)
+    {
+        float multiplier = (duration > 2000)? (float)1.2:(float)1.0;
+
+        float cmdPwr = 0;
+        if (traveled < goal) cmdPwr = -1*pwr*multiplier/(float)100.0;
+        cmdPwr = Range.clip(cmdPwr, -1, 1);
+        return cmdPwr;
+    }
+
     float extendRamp(boolean rampDeployed) {
-        float extensionMin  = (float)-0.7;
-        float extensionMax  =  (float)0.7;
+        float extensionMin  = (float)-1;
+        float extensionMax  =  (float)1;
         float extensionMotorCmd = 0;
         if (!rampDeployed) {
             extensionMotorCmd = extensionMax;
@@ -190,13 +220,13 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
         float leftDriveCmd = 0;
         float rightDriveCmd = 0;
         float extensionMotorCmd = 0;
-        /*{ , , , , ,           0   1   2    3   4  5  6  7  8  9  10*/
-        int[] TurnArray =      {0, 45,  0,   2,  0, 0, 0, 0, 0, 0,  0};
-        int[] TurnPower =      {0, 40,  0, -30,  0, 0, 0, 0, 0, 0,  0};
-        float[] StraightPwr=   {0, 0,  30,   0,  0, 0, 0, 0, 0, 0,  0};
-        double[] StraightDist= {0, 0,  50,   0,  0, 0, 0, 0, 0, 0,  0};
-        float[] LoaderPwr =    {0, 0,   0,   1,  0, 0, 0, 0, 0, 0,  0};
-        float[] rampMotorPwr = {0, 0,   0,   1,  0, 0, 0, 0, 0, 0,  0};
+        /*{ , , , , ,           0    1    2    3   4  5  6  7  8  9  10*/
+        int[] TurnArray =      {0,   0,   0,   0,  0, 0, 0, 0, 0, 0,  0};
+        int[] TurnPower =      {0,   0,   0,   0,  0, 0, 0, 0, 0, 0,  0};
+        float[] StraightPwr=   {0,  40,   0, -40,  0, 0, 0, 0, 0, 0,  0};
+        double[] StraightDist= {0, 2700,  0, 200,  0, 0, 0, 0, 0, 0,  0};
+        float[] LoaderPwr =    {0,   0,   0,   0,  0, 0, 0, 0, 0, 0,  0};
+        float[] rampMotorPwr = {0,   0,   0,   0,  0, 0, 0, 0, 0, 0,  0};
         boolean rampLimitReached = false;
         double extensionSwitchTime = 0;
 
@@ -225,6 +255,7 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
             CurrentTime = System.currentTimeMillis();
+            telemetry.addData("Current Time: ", CurrentTime);
 
             //Loop For Timing System
             /* ***************************************************
@@ -235,7 +266,7 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
             if (CurrentTime - LastSensor > SENSORPERIOD) {
                 LastSensor = CurrentTime;
                 //gyro
-                currentHeading = myGyro.getHeading();
+                //currentHeading = myGyro.getHeading();
 
                 // probably more "pure" just to read the touch sensor here
                 // and interpret the results in NAV.  We can probably deal with the
@@ -291,7 +322,8 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
                 float loaderMax = 1;
 
                 float rampCmd = 0;
-                int extensionMaxTime = 1350;  //milliseconds
+                int extensionMaxTime = 1750;  //milliseconds
+                telemetry.addData("Current State: ", CurrentAutoState);
 
                 switch ( CurrentAutoState ) {
                     case 0: // extend the ramp!
@@ -305,7 +337,27 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
                             stageComplete = true;
                         }
                         break;
-                    case 1: case 3: // turn
+                    case 1: case 3: // go straight
+                        double rightDist = Math.abs(rightMotorPos - startRight);
+                        double leftDist  = Math.abs(leftMotorPos  - startLeft);
+                        leftDriveCmd = Fwd5(leftDist,StraightDist[CurrentAutoState],StraightPwr[CurrentAutoState],stageTime);
+                        rightDriveCmd = Fwd5(rightDist,StraightDist[CurrentAutoState],StraightPwr[CurrentAutoState],stageTime);
+                        if (((leftDriveCmd == 0) && (rightDriveCmd == 0)) || (stageTime > MAX_MOVE_TIME)) {
+                            stageComplete = true;
+                            leftDriveCmd = 0;
+                            rightDriveCmd = 0;
+                        }
+                        break;
+                    case 2: //running ramp motor
+                        rampMotorCmd = (.25);
+                        if (stageTime > 2000) {
+                            stageComplete = true;
+                            leftDriveCmd = 0;
+                            rightDriveCmd = 0;
+                        }
+
+                        break;
+                    case 4: // turn
                         /* gyroturn5
                          *  startHeading  - input. heading when this "state" started
                          *  currHeading   - input. what is the heading when gt5 invoked
@@ -314,7 +366,7 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
                          *  turnTime      - input. how long this "state" has been in play
                          * @return pwrSet - multiply the pwrSet by -1 for the starboard motor in the calling routine.
                           */
-                        int target = TurnArray[CurrentAutoState];
+                        /*int target = TurnArray[CurrentAutoState];
                         int turnvec = TurnPower[CurrentAutoState];
                         rightDriveCmd = myDrive.gyroTurn5(startHeading,currentHeading,target,turnvec,stageTime);
                         leftDriveCmd = (float)-1*rightDriveCmd;
@@ -324,20 +376,11 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
                             leftDriveCmd = 0;
                             stageComplete = true;
                         }
+                        */
+                        stageComplete = true;
                         break;
-                    case 2: // go straight
-                        double rightDist = Math.abs(rightMotorPos - startRight);
-                        double leftDist  = Math.abs(leftMotorPos  - startLeft);
-                        leftDriveCmd = myDrive.Fwd5(leftDist,StraightDist[CurrentAutoState],StraightPwr[CurrentAutoState],stageTime);
-                        rightDriveCmd = myDrive.Fwd5(rightDist,StraightDist[CurrentAutoState],StraightPwr[CurrentAutoState],stageTime);
-                        if (((leftDriveCmd == 0) && (rightDriveCmd == 0)) || (stageTime > MAX_MOVE_TIME)){
-                            stageComplete = true;
-                            leftDriveCmd = 0;
-                            rightDriveCmd = 0;
-                        }
-                        break;
-                    case 4: //Pick up the block: Run loader and ramp for <2 second only pick 1 block
-                        leftDriveCmd = 0;
+                    case 5: //Pick up the block: Run loader and ramp for <2 second only pick 1 block
+                        /*leftDriveCmd = 0;
                         rightDriveCmd = 0;
 
                         if (stageTime < 2000) {
@@ -349,9 +392,11 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
                             rampMotorCmd   = 0;
                             stageComplete  = true;
                         }
+                       */
+                        stageComplete = true;
 
                         break;
-                    case 5:
+                    case 6:
                         leftDriveCmd  = 0;
                         rightDriveCmd = 0;
                         stageComplete = true;
@@ -369,11 +414,12 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
                 }
                 if (stageComplete) {
                     //startPos = currentPos;
-                    startHeading = currentHeading;
+                    //startHeading = currentHeading;
                     startLeft  = leftMotorPos;
                     startRight = rightMotorPos;
                     stageTime = 0;
-                    CurrentAutoState = Range.clip(CurrentAutoState++,0,1000);
+                    CurrentAutoState++;
+                    CurrentAutoState = Range.clip(CurrentAutoState,0,1000);
                     telemetry.addData("Current State: ", CurrentAutoState);
                 }
                 // mapping inputs to servo command
@@ -384,7 +430,7 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
                 // motor commands: Clipped & clamped.
                 leftDriveCmd      = Range.clip(leftDriveCmd,  driveMin, driveMax);
                 rightDriveCmd     = Range.clip(rightDriveCmd, driveMin, driveMax);
-                extensionMotorCmd = Range.clip(rampCmd,       riserMin, riserMax);
+                extensionMotorCmd = Range.clip(extensionMotorCmd,       riserMin, riserMax);
                 rampMotorCmd      = Range.clip(rampMotorCmd,  rampMin,  rampMax);
                 loaderMotorCmd    = Range.clip(loaderMotorCmd,loaderMin,loaderMax);
             }

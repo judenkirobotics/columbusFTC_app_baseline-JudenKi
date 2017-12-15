@@ -44,7 +44,7 @@ import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
 
 //@Autonomous(name="Time Slide Op Mode", group="Pushbot")
 @SuppressWarnings("WeakerAccess")
-@TeleOp(name = "Time Slice Op Mode Improved", group = "K9Bot")
+@TeleOp(name = "JK Driver Controlledf", group = "K9Bot")
 public class JK_DriverOpMode extends LinearOpMode {
 
     /* Declare OpMode members. */
@@ -246,10 +246,10 @@ public class JK_DriverOpMode extends LinearOpMode {
                     //Get controller inputs for buttons and bumpers, may need to
                     //add debounce if spurious button push would cause bad
                     //performance.
-                    g1_A  = gamepad1.a;
-                    g1_B  = gamepad1.b;
-                    g1_X  = gamepad1.x;
-                    g1_Y  = gamepad1.y;
+                    g1_A = gamepad1.a;
+                    g1_B = gamepad1.b;
+                    g1_X = gamepad1.x;
+                    g1_Y = gamepad1.y;
                     g1_DD = gamepad1.dpad_down;
                     g1_DL = gamepad1.dpad_left;
                     g1_DR = gamepad1.dpad_right;
@@ -259,10 +259,10 @@ public class JK_DriverOpMode extends LinearOpMode {
                     g1_RT = gamepad1.right_trigger;
                     g1_LT = gamepad1.left_trigger;
 
-                    g2_A  = gamepad2.a;
-                    g2_B  = gamepad2.b;
-                    g2_X  = gamepad2.x;
-                    g2_Y  = gamepad2.y;
+                    g2_A = gamepad2.a;
+                    g2_B = gamepad2.b;
+                    g2_X = gamepad2.x;
+                    g2_Y = gamepad2.y;
                     g2_DD = gamepad2.dpad_down;
                     g2_DL = gamepad2.dpad_left;
                     g2_DR = gamepad2.dpad_right;
@@ -271,6 +271,7 @@ public class JK_DriverOpMode extends LinearOpMode {
                     g2_LB = gamepad2.left_bumper;
                     g2_RT = gamepad2.right_trigger;
                     g2_LT = gamepad2.left_trigger;
+                }
 
         /*  ***********************************************************************
          ^^^^^^^^^^^^^ ALL OF THE STUFF ABOVE HERE IS READING INPUTS ^^^^^^^^^^^^^^^
@@ -334,7 +335,15 @@ public class JK_DriverOpMode extends LinearOpMode {
                             rampMotorCmd = rampMin;
                         }
                        */
-                       rampMotorCmd = g2_RightY;
+                       //rampMotorCmd = g2_RightY*g2_RightY*g2_RightY;
+                        g2_LeftY = g2_LeftY * g2_LeftY * g2_LeftY;
+                        g2_RightY = g2_RightY*g2_RightY*g2_RightY;
+                        if (Math.abs(g2_RightY) > 0.05){
+                            rampMotorCmd = g2_RightY * 0.5;
+                        }
+                        else {
+                            rampMotorCmd = g2_LeftY;
+                        }
 
                         //Only energize the extension motor if the state indicates it is not
                         //deployed
@@ -414,22 +423,35 @@ public class JK_DriverOpMode extends LinearOpMode {
 
                     if (CurrentTime - LastTelemetry > TELEMETRYPERIOD) {
                         LastTelemetry = CurrentTime;
+                        telemetry.addData("Left Motor Power:       ", leftDriveCmd);
+                        telemetry.addData("Right Motor Power:      ", rightDriveCmd);
+                        telemetry.addData("Ramp Motor Power:       ", rampMotorCmd);
+                        telemetry.addData("Loader Motor Power:     ", loaderMotorCmd);
+                        telemetry.addData("Extension Motor Power:  ", extensionMotorCmd);
+                        telemetry.addData("Left Trigger  ", g1_LT);
+                        telemetry.addData("Right Trigger ", g1_RT);
+                        telemetry.addData("Left Bumper   ", g1_LB);
+                        telemetry.addData("Right Bumper  ", g1_RB);
+                        telemetry.addData("A             ", g1_A);
+                        telemetry.addData("B             ", g1_B);
+                        telemetry.update();
+
                         telemetry.update();
                     }
-                }
+                
 
-                telemetry.addData("Left Motor Power:       ", leftDriveCmd);
-                telemetry.addData("Right Motor Power:      ", rightDriveCmd);
-                telemetry.addData("Ramp Motor Power:       ", rampMotorCmd);
-                telemetry.addData("Loader Motor Power:     ", loaderMotorCmd);
-                telemetry.addData("Extension Motor Power:  ", extensionMotorCmd);
-                telemetry.addData("Left Trigger  ", g1_LT);
-                telemetry.addData("Right Trigger ", g1_RT);
-                telemetry.addData("Left Bumper   ", g1_LB);
-                telemetry.addData("Right Bumper  ", g1_RB);
-                telemetry.addData("A             ", g1_A);
-                telemetry.addData("B             ", g1_B);
-                telemetry.update();
+                //telemetry.addData("Left Motor Power:       ", leftDriveCmd);
+                //telemetry.addData("Right Motor Power:      ", rightDriveCmd);
+                //telemetry.addData("Ramp Motor Power:       ", rampMotorCmd);
+                //telemetry.addData("Loader Motor Power:     ", loaderMotorCmd);
+                //telemetry.addData("Extension Motor Power:  ", extensionMotorCmd);
+                //telemetry.addData("Left Trigger  ", g1_LT);
+                //telemetry.addData("Right Trigger ", g1_RT);
+                //telemetry.addData("Left Bumper   ", g1_LB);
+                //telemetry.addData("Right Bumper  ", g1_RB);
+                //telemetry.addData("A             ", g1_A);
+                //telemetry.addData("B             ", g1_B);
+                //telemetry.update();
             }// end while opmode is active
         //  NEED TO ADD CODE TO FORCE ALL ACTUATORS INTO A SHUTDOWN STATE
         robot.leftDrive.setPower(0);
