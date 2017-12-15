@@ -240,6 +240,7 @@ public class JK_DriverOpMode extends LinearOpMode {
                     LastController = CurrentTime;
                     g1_LeftX = gamepad1.left_stick_x;
                     g1_LeftY = gamepad1.left_stick_y;
+                    g2_LeftY = gamepad2.left_stick_y;
                     g1_RightX = gamepad1.right_stick_x;
                     g1_RightY = gamepad1.right_stick_y;
                     g2_RightY = gamepad2.right_stick_y;
@@ -339,7 +340,7 @@ public class JK_DriverOpMode extends LinearOpMode {
                         g2_LeftY = g2_LeftY * g2_LeftY * g2_LeftY;
                         g2_RightY = g2_RightY*g2_RightY*g2_RightY;
                         if (Math.abs(g2_RightY) > 0.05){
-                            rampMotorCmd = g2_RightY * 0.5;
+                            rampMotorCmd = g2_RightY * 0.3;
                         }
                         else {
                             rampMotorCmd = g2_LeftY;
@@ -438,7 +439,7 @@ public class JK_DriverOpMode extends LinearOpMode {
 
                         telemetry.update();
                     }
-                
+
 
                 //telemetry.addData("Left Motor Power:       ", leftDriveCmd);
                 //telemetry.addData("Right Motor Power:      ", rightDriveCmd);
