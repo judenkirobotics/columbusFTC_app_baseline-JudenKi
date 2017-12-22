@@ -57,6 +57,8 @@ public class HardwarePushbot
     /* Public OpMode members. */
     public DcMotor     leftDrive      = null;
     public DcMotor     rightDrive     = null;
+    public DcMotor     leftRear      = null;
+    public DcMotor     rightRear     = null;
     public DcMotor     rampMotor      = null;
     public TouchSensor extensionTouch = null;  // Ramp Deployment
     public DcMotor     extensionMotor = null;
@@ -87,6 +89,8 @@ public class HardwarePushbot
         //leftArm    = hwMap.get(DcMotor.class, "left_arm");
         leftDrive.setDirection(DcMotor.Direction.FORWARD); // Set to REVERSE if using AndyMark motors
         rightDrive.setDirection(DcMotor.Direction.REVERSE);// Set to FORWARD if using AndyMark motors
+        leftRear.setDirection(DcMotor.Direction.FORWARD); // Set to REVERSE if using AndyMark motors
+        rightRear.setDirection(DcMotor.Direction.REVERSE);// Set to FORWARD if using AndyMark motors
         rampMotor.setDirection(DcMotor.Direction.FORWARD);
         loaderMotor.setDirection(DcMotor.Direction.FORWARD);
         extensionMotor.setDirection(DcMotor.Direction.FORWARD);

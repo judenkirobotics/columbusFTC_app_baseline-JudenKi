@@ -33,12 +33,6 @@ public class JK_Driver_Mecanum extends LinearOpMode {
     final long MINORFRAME = 50;
     final long TELEMETRYPERIOD = 1000;
 
-    final double PROPGAIN = 0.6;
-    final double INTGAIN = 0.3;
-    final double DERGAIN = 0.1;
-    final long PIDMAXDUR = 3;
-
-
     int rightMotorPos;
     int lefMotorPos;
     public botMotors makeAsquare(long duration){
@@ -76,17 +70,7 @@ public class JK_Driver_Mecanum extends LinearOpMode {
         return m;
     }
 
-    public double simplePID(double err, double duration, double prevErr) {
-        double pidmin = -.7;
-        double pidmax = 0.7;
-        double propTerm = Range.clip(PROPGAIN * err, pidmin, pidmax);
-        double intTerm = Range.clip(duration / PIDMAXDUR, pidmin, pidmax) * INTGAIN;
-        double derTerm = Range.clip((err - prevErr), pidmin, pidmax) * DERGAIN;
-        return (Range.clip(propTerm + intTerm + derTerm, pidmin, pidmax));
-    }
-
     @Override
-
     public void runOpMode() {
 
         /*
@@ -258,8 +242,8 @@ public class JK_Driver_Mecanum extends LinearOpMode {
                         // if conditions demand it.
                         double driveMax      = 1;
                         double driveMin      = -1;
-                        double rampMin       = -0.4;
-                        double rampMax       = 0.4;
+                        //double rampMin       = -0.4;
+                        //double rampMax       = 0.4;
                         double extensionMin  = -1;
                         double extensionMax  =  1;
                         double feederMin     = -1;
@@ -314,13 +298,13 @@ public class JK_Driver_Mecanum extends LinearOpMode {
                         //Only energize the extension motor if the state indicates it is not
                         //deployed
                         extensionMotorCmd = 0;
-                        if (rampDeployed == false) {
+                        if (!rampDeployed) {
                             if (g2.RB) {
                                 extensionMotorCmd = extensionMax;
                             }
                         }
                         // Backoff the extension motor to reduce tension in frame
-                        if ((rampDeployed == true) && (rampBackoff == false)) {
+                        if ((rampDeployed) && (!rampBackoff)) {
                             extensionCount = extensionCount +1;
                             if (extensionCount > backoffCount) {
                                 rampBackoff = true;
