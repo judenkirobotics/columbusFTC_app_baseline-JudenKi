@@ -62,14 +62,19 @@ public class JK_Driver_Mecanum extends LinearOpMode {
         return sq;
     }
     public botMotors crabDrive (joyStick cx){
+        // we'll add some logic later to allow differential steering while crabbing
         botMotors m = new botMotors();
-        m.leftFront = 0;
-        m.leftRear = 0;
-        m.rightFront = 0;
-        m.rightRear = 0;
+        m.leftFront = cx.RightX + cx.RightY;
+        m.rightFront = cx.RightX - cx.RightY;
+        float tMax = Math.max(Math.abs(m.leftFront),Math.abs(m.rightFront));
+        tMax = Math.min(tMax, (float)1);
+        m.leftFront = m.leftFront/tMax;
+        m.rightFront = m.rightFront/tMax;
+        m.leftRear = m.rightFront;
+        m.rightRear = m.leftFront;
+
         return m;
     }
-    //double position = (MAX_POS - MIN_POS) / 2; // Start at halfway position
 
     public double simplePID(double err, double duration, double prevErr) {
         double pidmin = -.7;
@@ -104,35 +109,6 @@ public class JK_Driver_Mecanum extends LinearOpMode {
         long LastController  = CurrentTime + 7;
         long LastTelemetry   = CurrentTime + 17;
         long squareDur       = 0;
-
-
-        // variables to store controller inputs.
-        g1.A       = false;
-        g1.B       = false;
-        g1.X       = false;
-        g1.Y       = false;
-        g1.LB      = false;
-        boolean g1_RB      = false;
-        float   g1_LT      = 0;
-        float   g1_RT      = 0;
-        boolean g1_DU      = false;
-        boolean g1_DD      = false;
-        boolean g1_DL      = false;
-        boolean g1_DR      = false;
-
-        boolean g2_A       = false;
-        boolean g2_B       = false;
-        boolean g2_X       = false;
-        boolean g2_Y       = false;
-        boolean g2_LB      = false;
-        boolean g2_RB      = false;
-        float   g2_LT      = 0;
-        float   g2_RT      = 0;
-        boolean g2_DU      = false;
-        boolean g2_DD      = false;
-        boolean g2_DL      = false;
-        boolean g2_DR      = false;
-
 
         // Variables to store actuator commands
         double leftDriveCmd       = 0;
@@ -245,16 +221,16 @@ public class JK_Driver_Mecanum extends LinearOpMode {
                     g1.RT = gamepad1.right_trigger;
                     g1.LT = gamepad1.left_trigger;
 
-                    g2_A = gamepad2.a;
-                    g2_B = gamepad2.b;
-                    g2_X = gamepad2.x;
-                    g2_Y = gamepad2.y;
-                    g2_DD = gamepad2.dpad_down;
-                    g2_DL = gamepad2.dpad_left;
-                    g2_DR = gamepad2.dpad_right;
-                    g2_DU = gamepad2.dpad_up;
+                    g2.A = gamepad2.a;
+                    g2.B = gamepad2.b;
+                    g2.X = gamepad2.x;
+                    g2.Y = gamepad2.y;
+                    g2.DD = gamepad2.dpad_down;
+                    g2.DL = gamepad2.dpad_left;
+                    g2.DR = gamepad2.dpad_right;
+                    g2.DU = gamepad2.dpad_up;
                     g2.RB = gamepad2.right_bumper;
-                    g2_LB = gamepad2.left_bumper;
+                    g2.LB = gamepad2.left_bumper;
                     g2.RT = gamepad2.right_trigger;
                     g2.LT = gamepad2.left_trigger;
                 }
@@ -294,28 +270,26 @@ public class JK_Driver_Mecanum extends LinearOpMode {
                         // straightforward, if that's desired.  Using 2 sticks was simpler to
                         // code up in a hurry.
 
-                        if (g1.X){
-                            makeAsquare(squareDur);
+                        if (g2.X){
+                            mDrive = makeAsquare(squareDur);
                             squareDur += MINORFRAME;
                         }
                         else{
                             squareDur = 0;
-                            if (g1.Y){
+                            if (g2.Y){
                                 mDrive = crabDrive(g2);
                             }
                             else {
-                                g1.LeftY = g1.LeftY * g1.LeftY * g1.LeftY;
-                                g1.RightY = g1.RightY * g1.RightY * g1.RightY;
-                                leftDriveCmd = g1.LeftY;
-                                rightDriveCmd = g1.RightY;
-                                leftRearCmd = leftDriveCmd;
-                                rightRearCmd = rightDriveCmd;
+                                mDrive.leftFront = g1.LeftY * g1.LeftY * g1.LeftY;
+                                mDrive.rightFront = g1.RightY * g1.RightY * g1.RightY;
+                                mDrive.leftRear = mDrive.leftFront;
+                                mDrive.rightRear = mDrive.rightFront;
                             }
                         }
-                        leftDriveCmd = Range.clip(leftDriveCmd, driveMin, driveMax);
-                        rightDriveCmd = Range.clip(leftDriveCmd, driveMin, driveMax);
-                        leftRearCmd = Range.clip(leftRearCmd, driveMin, driveMax);
-                        rightRearCmd = Range.clip(rightRearCmd, driveMin, driveMax);
+                        leftDriveCmd = Range.clip(mDrive.leftFront, driveMin, driveMax);
+                        rightDriveCmd = Range.clip(mDrive.rightFront, driveMin, driveMax);
+                        leftRearCmd = Range.clip(mDrive.leftRear, driveMin, driveMax);
+                        rightRearCmd = Range.clip(mDrive.rightRear, driveMin, driveMax);
 
                         //Set loader motors to no power, if either trigger is pressed change power
                         loaderMotorCmd    = 0;
@@ -394,14 +368,12 @@ public class JK_Driver_Mecanum extends LinearOpMode {
 
                         robot.leftDrive.setPower(rightDriveCmd);
                         robot.rightDrive.setPower(leftDriveCmd);
-                        robot.leftRear.setPower(rightDriveCmd);
-                        robot.rightRear.setPower(leftDriveCmd);
+                        robot.leftRear.setPower(rightRearCmd);
+                        robot.rightRear.setPower(leftRearCmd);
 
                         robot.extensionMotor.setPower(extensionMotorCmd);
                         robot.rampMotor.setPower(rampMotorCmd);
                         robot.loaderMotor.setPower(loaderMotorCmd);
-
-
                     }
 
 
@@ -425,34 +397,14 @@ public class JK_Driver_Mecanum extends LinearOpMode {
                         telemetry.addData("A             ", g1.A);
                         telemetry.addData("B             ", g1.B);
                         telemetry.update();
-
-                        telemetry.update();
                     }
-
-
-                //telemetry.addData("Left Motor Power:       ", leftDriveCmd);
-                //telemetry.addData("Right Motor Power:      ", rightDriveCmd);
-                //telemetry.addData("Ramp Motor Power:       ", rampMotorCmd);
-                //telemetry.addData("Loader Motor Power:     ", loaderMotorCmd);
-                //telemetry.addData("Extension Motor Power:  ", extensionMotorCmd);
-                //telemetry.addData("Left Trigger  ", g1_LT);
-                //telemetry.addData("Right Trigger ", g1_RT);
-                //telemetry.addData("Left Bumper   ", g1_LB);
-                //telemetry.addData("Right Bumper  ", g1_RB);
-                //telemetry.addData("A             ", g1_A);
-                //telemetry.addData("B             ", g1_B);
-                //telemetry.update();
             }// end while opmode is active
-        //  NEED TO ADD CODE TO FORCE ALL ACTUATORS INTO A SHUTDOWN STATE
         robot.leftDrive.setPower(0);
         robot.rightDrive.setPower(0);
+        robot.leftRear.setPower(0);
+        robot.rightRear.setPower(0);
         robot.extensionMotor.setPower(0);
         robot.rampMotor.setPower(0);
         robot.loaderMotor.setPower(0);
-
-
-
-
-
     }
 }
