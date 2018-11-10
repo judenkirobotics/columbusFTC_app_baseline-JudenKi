@@ -98,7 +98,6 @@ public class JK_DriverOpMode extends LinearOpMode {
     public void runOpMode() {
 
         /*
-         * Initialize the drive system variables.
          * The init() method of the hardware class does all the work here
          */
         robot.init(hardwareMap);
@@ -157,6 +156,8 @@ public class JK_DriverOpMode extends LinearOpMode {
         // Variables to store actuator commands
         double leftDriveCmd       = 0;
         double rightDriveCmd      = 0;
+        double armMotorCmd        = 0;
+        double horizontalArmCmd   = 0;
         double loaderMotorCmd     = 0;
         double rampMotorCmd       = 0;
         double extensionMotorCmd  = 0;
@@ -243,14 +244,16 @@ public class JK_DriverOpMode extends LinearOpMode {
                     //g2_LeftY = gamepad2.left_stick_y;
                     g1_RightX = gamepad1.right_stick_x;
                     g1_RightY = gamepad1.right_stick_y;
+                    g1_A = gamepad1.a;
+                    g1_B = gamepad1.b;
+                    g1_X = gamepad1.x;
+                    g1_Y = gamepad1.y;
                     //g2_RightY = gamepad2.right_stick_y;
                     //Get controller inputs for buttons and bumpers, may need to
                     //add debounce if spurious button push would cause bad
                     //performance.
-                    /*g1_A = gamepad1.a;
-                    g1_B = gamepad1.b;
-                    g1_X = gamepad1.x;
-                    g1_Y = gamepad1.y;
+                    /*
+
                     g1_DD = gamepad1.dpad_down;
                     g1_DL = gamepad1.dpad_left;
                     g1_DR = gamepad1.dpad_right;
@@ -327,15 +330,22 @@ public class JK_DriverOpMode extends LinearOpMode {
                         }*/
 
 
-                        //Set ramp motord to no power, if either trigger is pressed change power
-                       /* rampMotorCmd      = 0;
-                        if (g2_A) {
-                            rampMotorCmd = rampMax;
+                        //Set particle grabber to no power,
+                        // if either trigger is pressed change power
+                        armMotorCmd      = 0;
+                        horizontalArmCmd = 0;
+                        if (g1_A) {
+                            armMotorCmd = 0.50;
                         }
-                        if (g2_B) {
-                            rampMotorCmd = rampMin;
+                        else if (g1_B) {
+                            armMotorCmd = -0.5;
                         }
-                       */
+                        if (g1_X) {
+                            horizontalArmCmd = 0.50;
+                        }
+                        else if (g1_Y) {
+                            horizontalArmCmd = -0.5;
+                        }
                        //rampMotorCmd = g2_RightY*g2_RightY*g2_RightY;
                        /* g2_LeftY = g2_LeftY * g2_LeftY * g2_LeftY;
                         g2_RightY = g2_RightY*g2_RightY*g2_RightY;
@@ -407,6 +417,8 @@ public class JK_DriverOpMode extends LinearOpMode {
                         //leftDriveCmd = (float)-1*leftDriveCmd;
                         robot.leftDrive.setPower(rightDriveCmd);
                         robot.rightDrive.setPower(leftDriveCmd);
+                        robot.horizontalMotor.setPower(horizontalArmCmd);
+                        robot.armMotor.setPower(armMotorCmd);
 
                         //robot.extensionMotor.setPower(extensionMotorCmd);
                         //robot.rampMotor.setPower(rampMotorCmd);

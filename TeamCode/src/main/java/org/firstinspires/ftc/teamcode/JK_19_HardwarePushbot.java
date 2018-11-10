@@ -25,17 +25,13 @@
  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-package org.firstinspires.ftc.teamcode;
-
+ */package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
-
 /**
  * This is NOT an opmode.
  *
@@ -46,35 +42,38 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * This hardware class assumes the following device names have been configured on the robot:
  * Note:  All names are lower case and some have single spaces between words.
  *
- * Motor channel:  Left  drive motor:        "left_drive"
+ * Motor channel:  Left drive              "left_drive"
  * Motor channel:  Right drive motor:        "right_drive"
  * Motor channel:  Manipulator drive motor:  "left_arm"
  * Servo channel:  Servo to open left claw:  "left_hand"
  * Servo channel:  Servo to open right claw: "right_hand"
  */
-public class JK_HardwarePushbot
+public class JK_19_HardwarePushbot
 {
     /* Public OpMode members. */
     public DcMotor     leftDrive           = null;
     public DcMotor     rightDrive          = null;
-    public DcMotor     leftRear            = null;
-    public DcMotor     rightRear           = null;
-    public DcMotor     rampMotor           = null;
-    public TouchSensor extensionTouch      = null;  // Ramp Deployment
-    public DcMotor     extensionMotor      = null;
-    public DcMotor     loaderMotor         = null;
-    public GyroSensor  gyro                = null;
+    public DcMotor     horizontalMotor           = null;
+    public DcMotor     armMotor          = null;
+    //public Servo       arm                 = null;
+   // public DcMotor     leftRear            = null;
+    //public DcMotor     rightRear           = null;
+   // public DcMotor     rampMotor           = null;
+    //public TouchSensor extensionTouch      = null;  // Ramp Deployment
+    //public DcMotor     extensionMotor      = null;
+    //public DcMotor     loaderMotor         = null;
+    //public GyroSensor  gyro                = null;
     //Testing relic
-    public Servo       relicPivotServo     = null;
-    public Servo       relicClawServo      = null;
-    public DcMotor     relicExtendMotorCmd = null;
+    //public Servo       relicPivotServo     = null;
+    //public Servo       relicClawServo      = null;
+    //public DcMotor     relicExtendMotorCmd = null;
 
     /* local OpMode members. */
     HardwareMap hwMap           =  null;
     private ElapsedTime period  = new ElapsedTime();
 
     /* Constructor */
-    public JK_HardwarePushbot(){
+    public JK_19_HardwarePushbot(){
 
     }
 
@@ -84,51 +83,64 @@ public class JK_HardwarePushbot
         hwMap = ahwMap;
 
         // Define and Initialize Motors
-        leftDrive  = hwMap.get(DcMotor.class, "left_drive");
-        rightDrive = hwMap.get(DcMotor.class, "right_drive");
-        rampMotor  = hwMap.get(DcMotor.class, "beltmotor");
-        loaderMotor= hwMap.get(DcMotor.class, "loadermotor");
-        extensionMotor = hwMap.get(DcMotor.class, "pullymotor");
+        leftDrive  = hwMap.get(DcMotor.class, "left");
+        rightDrive = hwMap.get(DcMotor.class, "right");
+        horizontalMotor  = hwMap.get(DcMotor.class, "horiz");
+        armMotor = hwMap.get(DcMotor.class, "arm");
+      //  rampMotor  = hwMap.get(DcMotor.class, "beltmotor");
+       // loaderMotor= hwMap.get(DcMotor.class, "loadermotor");
+      //  extensionMotor = hwMap.get(DcMotor.class, "pullymotor");
         //relic test
-        relicExtendMotorCmd = hwMap.get(DcMotor.class, "relicExtendMotor");
-        relicClawServo = hwMap.get(Servo.class, "relicClawServo");
-        relicPivotServo = hwMap.get(Servo.class, "relicPivotServo");
-        relicExtendMotorCmd.setPower(0);
-        relicClawServo.setPosition(0);
-        relicPivotServo.setPosition(0);
+     //   relicExtendMotorCmd = hwMap.get(DcMotor.class, "relicExtendMotor");
+       // relicClawServo = hwMap.get(Servo.class, "relicClawServo");
+      //  relicPivotServo = hwMap.get(Servo.class, "relicPivotServo");
+      //  relicExtendMotorCmd.setPower(0);
+       // relicClawServo.setPosition(0);
+      //  relicPivotServo.setPosition(0);
 
         //leftArm    = hwMap.get(DcMotor.class, "left_arm");
         leftDrive.setDirection(DcMotor.Direction.FORWARD); // Set to REVERSE if using AndyMark motors
         rightDrive.setDirection(DcMotor.Direction.REVERSE);// Set to FORWARD if using AndyMark motors
-        leftRear.setDirection(DcMotor.Direction.FORWARD); // Set to REVERSE if using AndyMark motors
-        rightRear.setDirection(DcMotor.Direction.REVERSE);// Set to FORWARD if using AndyMark motors
-        rampMotor.setDirection(DcMotor.Direction.FORWARD);
-        loaderMotor.setDirection(DcMotor.Direction.FORWARD);
-        extensionMotor.setDirection(DcMotor.Direction.FORWARD);
+        //arm.setDirection(Servo.Direction.REVERSE);
+      //  leftRear.setDirection(DcMotor.Direction.FORWARD); // Set to REVERSE if using AndyMark motors
+       // rightRear.setDirection(DcMotor.Direction.REVERSE);// Set to FORWARD if using AndyMark motors
+       // rampMotor.setDirection(DcMotor.Direction.FORWARD);
+      //  loaderMotor.setDirection(DcMotor.Direction.FORWARD);
+      //  extensionMotor.setDirection(DcMotor.Direction.FORWARD);
 
         // Set all motors to zero power
         leftDrive.setPower(0);
         rightDrive.setPower(0);
-        rampMotor.setPower(0);
-        loaderMotor.setPower(0);
-        extensionMotor.setPower(0);
-
-
         // Set all motors to run without encoders.
         // May want to use RUN_USING_ENCODERS if encoders are installed.
         leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rampMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        loaderMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        extensionMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+      //  rampMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+     //   loaderMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+     //   extensionMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         //test
-        relicExtendMotorCmd.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    //    relicExtendMotorCmd.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
 
         //Define and Initialize Sensors
-        gyro = hwMap.get(GyroSensor.class, "gyro");
-        extensionTouch = hwMap.get(TouchSensor.class, "ext_touch");
+     //   gyro = hwMap.get(GyroSensor.class, "gyro");
+     //   extensionTouch = hwMap.get(TouchSensor.class, "ext_touch");
     }
-
  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

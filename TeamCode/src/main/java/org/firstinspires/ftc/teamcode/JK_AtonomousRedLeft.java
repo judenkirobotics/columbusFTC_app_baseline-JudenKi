@@ -11,6 +11,8 @@ package org.firstinspires.ftc.teamcode;
  *
  */
 
+//0, 50, 0, 50, 0
+
 /*
         import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
         import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -87,7 +89,7 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
     final long SENSORPERIOD = 50;
     final long ENCODERPERIOD = 50;
     final long SERVOPERIOD = 50;
-    final long NAVPERIOD = 50;
+    final long NAVPERIOD = 10;
     final long MOTORPERIOD = 50;
     //final long CONTROLLERPERIOD = 50;
     final long TELEMETRYPERIOD = 1000;
@@ -219,14 +221,22 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
         double startRight = 0;
         float leftDriveCmd = 0;
         float rightDriveCmd = 0;
+        float leftRearCmd = 0;
+        float rightRearCmd = 0;
         float extensionMotorCmd = 0;
-        /*{ , , , , ,           0    1    2    3   4  5  6  7  8  9  10*/
-        int[] TurnArray =      {0,   0,   0,   0,  0, 0, 0, 0, 0, 0,  0};
-        int[] TurnPower =      {0,   0,   0,   0,  0, 0, 0, 0, 0, 0,  0};
-        float[] StraightPwr=   {0,  40,   0, -40,  0, 0, 0, 0, 0, 0,  0};
-        double[] StraightDist= {0, 2700,  0, 200,  0, 0, 0, 0, 0, 0,  0};
-        float[] LoaderPwr =    {0,   0,   0,   0,  0, 0, 0, 0, 0, 0,  0};
-        float[] rampMotorPwr = {0,   0,   0,   0,  0, 0, 0, 0, 0, 0,  0};
+        final int BAL = 0;
+        final int LDR = 1;
+        final int FWD = 2;
+        final int CRB = 3;
+        final int WAIT = 4;
+        final int RMP = 5;
+        /*{ , , , , ,           0    1    2    3     4    5    6  */
+        int[] stage =          {BAL, FWD, CRB, FWD,  RMP, LDR, FWD, WAIT};
+        int[] TurnArray =      {  0,   0,   0,   0,    0,   0,   0,     0};
+        int[] TurnPower =      {  0,   0,   0,   0,    0,   0,   0,     0};
+        float[] StraightPwr=   {  0, -50,   0, -50,    0,   0,  50,     0};
+        double[] stageLim   =  {500, 600, 750, 600,   30, 200, 300, 25000};
+        float[] crabPwr =      {  0,   0,  60,   0,    0,   0,   0,     0};
         boolean rampLimitReached = false;
         double extensionSwitchTime = 0;
 
@@ -244,7 +254,7 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
         runtime.reset();
   /* ***********************************************************************************************
    *****************************                CODE          ****************
-********************
+   ********************
    ************************************************************************************************/
 
 
@@ -268,32 +278,9 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
                 //gyro
                 //currentHeading = myGyro.getHeading();
 
-                // probably more "pure" just to read the touch sensor here
-                // and interpret the results in NAV.  We can probably deal with the
-                // minor abuse to both cohesion and decomposition with no really bad
-                // side effects, however.
-                rampLimitReached = (robot.extensionTouch.isPressed()|| rampLimitReached);
-                telemetry.addData("Ramp Extension", "Is Not Pressed");
+                //rampLimitReached = (robot.extensionTouch.isPressed()|| rampLimitReached);
+                //telemetry.addData("Ramp Extension", "Is Not Pressed");
             }
-
-
-            /* ***************************************************
-             *                ENCODERS                          *
-             ****************************************************/
-            if (CurrentTime - LastEncoderRead > ENCODERPERIOD) {
-                LastEncoderRead = CurrentTime;
-                // We want to READ the Encoders here
-                //    ONLY set the motors in motion in ONE place.
-                //rightMotorPos = robot.rightDrive.getCurrentPosition();
-                //leftMotorPos  = robot.leftDrive.getCurrentPosition();
-                leftMotorPos  = robot.rightDrive.getCurrentPosition();
-                rightMotorPos = robot.leftDrive.getCurrentPosition();
-
-            }
-             /*         NO CONTROLLER INPUT FOR AUTONOMOUS       *
-             ********* THIS COMMENT IS JUST A REFERENCE**********/
-
-
 
         /*  ***********************************************************************
          ^^^^^^^^^^^^^ ALL OF THE STUFF ABOVE HERE IS READING INPUTS ^^^^^^^^^^^^^^^
@@ -325,101 +312,63 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
                 int extensionMaxTime = 1750;  //milliseconds
                 telemetry.addData("Current State: ", CurrentAutoState);
 
-                switch ( CurrentAutoState ) {
-                    case 0: // extend the ramp!
-                        extensionMotorCmd = extendRamp(rampLimitReached);
-
-                        // extens..Time != stageTime. It tells how long the ramp was extended. Persistent
-                        extensionSwitchTime += NAVPERIOD;
-
-                        if ((extensionSwitchTime > extensionMaxTime) ||
-                            (extensionMotorCmd == 0 )) {
-                            stageComplete = true;
-                        }
+                switch (stage[CurrentAutoState]) {
+                    //        int[] stage =          {BAL,FWD, CRB, FWD, RMP, FWD};
+                    case BAL:
                         break;
-                    case 1: case 3: // go straight
-                        double rightDist = Math.abs(rightMotorPos - startRight);
-                        double leftDist  = Math.abs(leftMotorPos  - startLeft);
-                        leftDriveCmd = Fwd5(leftDist,StraightDist[CurrentAutoState],StraightPwr[CurrentAutoState],stageTime);
-                        rightDriveCmd = Fwd5(rightDist,StraightDist[CurrentAutoState],StraightPwr[CurrentAutoState],stageTime);
-                        if (((leftDriveCmd == 0) && (rightDriveCmd == 0)) || (stageTime > MAX_MOVE_TIME)) {
-                            stageComplete = true;
-                            leftDriveCmd = 0;
-                            rightDriveCmd = 0;
-                        }
+                    case FWD:
+                        leftDriveCmd = StraightPwr[CurrentAutoState]/(float)100;
+                        rightDriveCmd = StraightPwr[CurrentAutoState]/(float)100;
+                        leftRearCmd = StraightPwr[CurrentAutoState]/(float)100;
+                        rightRearCmd = StraightPwr[CurrentAutoState]/(float)100;
                         break;
-                    case 2: //running ramp motor
-                        rampMotorCmd = (.25);
-                        if (stageTime > 2000) {
-                            stageComplete = true;
-                            leftDriveCmd = 0;
-                            rightDriveCmd = 0;
-                        }
-
-                        break;
-                    case 4: // turn
-                        /* gyroturn5
-                         *  startHeading  - input. heading when this "state" started
-                         *  currHeading   - input. what is the heading when gt5 invoked
-                         *  newHeading    - input. Destination heading
-                         *  turnPwr       - input. -100 to 100, percent power. negative means counterclockwise
-                         *  turnTime      - input. how long this "state" has been in play
-                         * @return pwrSet - multiply the pwrSet by -1 for the starboard motor in the calling routine.
-                          */
-                        /*int target = TurnArray[CurrentAutoState];
-                        int turnvec = TurnPower[CurrentAutoState];
-                        rightDriveCmd = myDrive.gyroTurn5(startHeading,currentHeading,target,turnvec,stageTime);
-                        leftDriveCmd = (float)-1*rightDriveCmd;
-
-                        if ((rightDriveCmd == 0) || (stageTime > MAX_MOVE_TIME)) {
-                            rightDriveCmd = 0;
-                            leftDriveCmd = 0;
-                            stageComplete = true;
-                        }
+                    case CRB:
+                        /*
+                        leftDriveCmd = crabPwr[CurrentAutoState]/(float)-100;
+                        leftRearCmd = crabPwr[CurrentAutoState]/(float)100;
+                        rightDriveCmd = crabPwr[CurrentAutoState]/(float)100;
+                        rightRearCmd = crabPwr[CurrentAutoState]/(float)-100;
                         */
-                        stageComplete = true;
                         break;
-                    case 5: //Pick up the block: Run loader and ramp for <2 second only pick 1 block
-                        /*leftDriveCmd = 0;
-                        rightDriveCmd = 0;
-
-                        if (stageTime < 2000) {
-                            loaderMotorCmd = LoaderPwr[CurrentAutoState];
-                            rampMotorCmd   = rampMotorPwr[CurrentAutoState];
-
-                        } else{
-                            loaderMotorCmd = 0;
-                            rampMotorCmd   = 0;
-                            stageComplete  = true;
-                        }
-                       */
-                        stageComplete = true;
-
+                    case LDR:
+                        loaderMotorCmd = 1;
                         break;
-                    case 6:
-                        leftDriveCmd  = 0;
-                        rightDriveCmd = 0;
-                        stageComplete = true;
+                    case RMP:
+                        rampCmd = 2/(float)5;
+                        telemetry.addData("TimebeforeMeasure", CurrentTime - LastNav);
+                        telemetry.update();
+                        break;
+                    case WAIT:
+                        leftDriveCmd      = 0;
+                        rightDriveCmd     = 0;
+                        leftRearCmd       = 0;
+                        rightRearCmd      = 0;
+                        loaderMotorCmd    = 0;
+                        rampCmd           = 0;
                         break;
                     default:
                         //stageComplete = true;
                         // we've arrived here - either we're done or something has gone badly wrong
-                        stageComplete     = false;
                         leftDriveCmd      = 0;
                         rightDriveCmd     = 0;
-                        rampCmd           = 0;
-                        rampMotorCmd      = 0;
+                        leftRearCmd       = 0;
+                        rightRearCmd      = 0;
                         loaderMotorCmd    = 0;
+                        rampCmd           = 0;
                         break;
                 }
-                if (stageComplete) {
-                    //startPos = currentPos;
-                    //startHeading = currentHeading;
-                    startLeft  = leftMotorPos;
-                    startRight = rightMotorPos;
+                telemetry.addData("RMPcmdbeforereset", rampCmd);
+                telemetry.update();
+                if (stageTime > stageLim[CurrentAutoState]) {
+                    leftDriveCmd      = 0;
+                    leftRearCmd      = 0;
+                    rightDriveCmd     = 0;
+                    rightRearCmd     = 0;
+                    loaderMotorCmd    = 0;
+                    rampCmd           = 0;
                     stageTime = 0;
                     CurrentAutoState++;
-                    CurrentAutoState = Range.clip(CurrentAutoState,0,1000);
+                    CurrentAutoState = Range.clip(CurrentAutoState,0,WAIT);
                     telemetry.addData("Current State: ", CurrentAutoState);
                 }
                 // mapping inputs to servo command
@@ -428,10 +377,11 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
                 // we will never have to worry about which set is clobbering the other.
 
                 // motor commands: Clipped & clamped.
-                leftDriveCmd      = Range.clip(leftDriveCmd,  driveMin, driveMax);
-                rightDriveCmd     = Range.clip(rightDriveCmd, driveMin, driveMax);
-                extensionMotorCmd = Range.clip(extensionMotorCmd,       riserMin, riserMax);
-                rampMotorCmd      = Range.clip(rampMotorCmd,  rampMin,  rampMax);
+                leftDriveCmd      = Range.clip(leftDriveCmd  ,driveMin, driveMax);
+                rightDriveCmd     = Range.clip(rightDriveCmd ,driveMin, driveMax);
+                leftRearCmd       = Range.clip(leftRearCmd   ,driveMin, driveMax);
+                rightRearCmd      = Range.clip(rightRearCmd  ,driveMin, driveMax);
+                rampMotorCmd      = Range.clip(rampCmd       ,riserMin, riserMax);
                 loaderMotorCmd    = Range.clip(loaderMotorCmd,loaderMin,loaderMax);
             }
             // END NAVIGATION
@@ -448,20 +398,6 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
          * VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 
-            /* **************************************************
-             *                SERVO OUTPUT
-             *                Inputs: leftClamp position command
-             *                        rightClamp position command *
-             *                Outputs: Physical write to servo interface.
-             ****************************************************/
-            if (CurrentTime - LastServo > SERVOPERIOD) {
-                LastServo = CurrentTime;
-
-                // Move both servos to new position.
-                //leftClamp.setPosition(leftClamp_Cmd);
-                //rightClamp.setPosition(rightClamp_Cmd);
-            }
-
 
             /* ***************************************************
              *                MOTOR OUTPUT
@@ -470,22 +406,17 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
              ****************************************************/
             if (CurrentTime - LastMotor > MOTORPERIOD) {
                 LastMotor = CurrentTime;
-                // Yes, we'll set the power each time, even if it's zero.
-                // this way we don't accidentally leave it somewhere.  Just simpler this way.
-                /*  Left Drive Motor Power  */
 
-                // kludge fix for motor mapping
-                //rightDriveCmd = (float)-1*rightDriveCmd;
-                //leftDriveCmd = (float)-1*leftDriveCmd;
                 robot.leftDrive.setPower(rightDriveCmd);
                 robot.rightDrive.setPower(leftDriveCmd);
+                robot.leftRear.setPower(leftRearCmd);
+                robot.rightRear.setPower(rightRearCmd);
 
                 /* Loader Motor Power */
                 robot.loaderMotor.setPower(loaderMotorCmd);
-
                 robot.rampMotor.setPower(rampMotorCmd);
-                /* Lifter Motor Power   */
-                robot.extensionMotor.setPower(extensionMotorCmd);
+
+
             }
 
 
@@ -502,7 +433,9 @@ public class JK_AtonomousRedLeft extends LinearOpMode {
         } // end of while opmode is active
         robot.leftDrive.setPower(0);
         robot.rightDrive.setPower(0);
-        robot.extensionMotor.setPower(0);
+        robot.leftRear.setPower(0);
+        robot.rightRear.setPower(0);
+        robot.rampMotor.setPower(0);
         robot.loaderMotor.setPower(0);
         telemetry.addData("Path", "Complete");
         telemetry.update();
