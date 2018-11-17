@@ -52,15 +52,17 @@ public class JK_AtonomousBenchBot extends LinearOpMode {
     final long TELEMETRYPERIOD = 1000;
 
     float stageTime = 0;
-    final int BAL = 0;
+    final int SWG = 0;
     final int LDR = 1;
     final int FWD = 2;
     final int CRB = 3;
     final int WAIT = 4;
     final int RMP = 5;
     int CurrentAutoState = 0;
-    int[] stage =          {BAL, FWD, CRB, FWD,  RMP, LDR, FWD, WAIT};
-    double[] stageLim   =  {25500, 600, 750, 600,   30, 200, 300, 25000};
+    int[] stage =          {FWD,   SWG, FWD, SWG,  WAIT};
+    long[] f_power =       {20,      0,  10,   0,     0};
+    long[] swing_power =   { 0,      5,   0,   5,     0};
+    double[] stageLim   =  {25500, 600, 750, 600, 30000};
 
     int red;
     int green;
@@ -68,8 +70,18 @@ public class JK_AtonomousBenchBot extends LinearOpMode {
     double sPos = 0.0;
 
 
-    @Override
-
+    //@Override
+    public boolean detectGold(int r, int g, int b){
+        boolean gold = false; //default value
+        if (g > 0){
+            if (((float)(r)/(float)(g) < 2.1) &&
+                ((float)(r)/(float)(g) > 1.2) &&
+                    ((float)(b)/(float)(g) < 0.9)){
+                gold = true; // changes to true only if the if statement is satisfied
+            }
+        }
+        return (gold);
+    }
     public void runOpMode() {
 
         /*
@@ -146,6 +158,7 @@ public class JK_AtonomousBenchBot extends LinearOpMode {
              *                         motor
              ****************************************************/
             if (CurrentTime - LastNav > NAVPERIOD) {
+                boolean foundGold = false;
                 LastNav = CurrentTime;
                 stageTime += NAVPERIOD;
                 boolean stageComplete = false;
@@ -155,25 +168,39 @@ public class JK_AtonomousBenchBot extends LinearOpMode {
                 float rampCmd = 0;
 
                 telemetry.addData("Current State: ", CurrentAutoState);
+                telemetry.addData("RED         ", red);
+                telemetry.addData("GREEN       ", green);
+                telemetry.addData("BLUE        ", blue);
+                float BG_ratio = (float)blue/(float)green;
+                //robot.ColorSensingServo.setPosition(sPos);
+                if (detectGold(red, green, blue)){
+                    telemetry.addData("GOLD GOLD GOLD!!!!!!", BG_ratio);
+                }
+                else {
+                    //   sPos = sPos + 0.005;
+                    telemetry.addData("NOT GOLD",BG_ratio);
+                }
 
                 switch (stage[CurrentAutoState]) {
                     //        int[] stage =          {BAL,FWD, CRB, FWD, RMP, FWD};
-                    case BAL:
+                    case SWG:
                         telemetry.addData("RED         ", red);
                         telemetry.addData("GREEN       ", green);
                         telemetry.addData("BLUE        ", blue);
                         robot.ColorSensingServo.setPosition(sPos);
-                        if((red>220) && (green>175) && (blue<165)) {
+                        if (detectGold(red, green, blue)){
                             telemetry.addData("GOLD GOLD GOLD!!!!!!", red);
                         }
-                        else{
+                        else {
                          //   sPos = sPos + 0.005;
+                            telemetry.addData("NOT GOLD",red);
                         }
 
 
 
                         break;
                     case FWD:
+
                         break;
                     case CRB:
                         break;

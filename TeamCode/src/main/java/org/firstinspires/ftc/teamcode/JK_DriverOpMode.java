@@ -417,8 +417,8 @@ public class JK_DriverOpMode extends LinearOpMode {
                         //leftDriveCmd = (float)-1*leftDriveCmd;
                         robot.leftDrive.setPower(rightDriveCmd);
                         robot.rightDrive.setPower(leftDriveCmd);
-                        robot.horizontalMotor.setPower(horizontalArmCmd);
-                        robot.armMotor.setPower(armMotorCmd);
+                       // robot.horizontalMotor.setPower(horizontalArmCmd);
+                       // robot.armMotor.setPower(armMotorCmd);
 
                         //robot.extensionMotor.setPower(extensionMotorCmd);
                         //robot.rampMotor.setPower(rampMotorCmd);
