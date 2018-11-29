@@ -29,8 +29,10 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -58,8 +60,9 @@ public class JK_HardwareBenchbot
     /* Public OpMode members. */
 
     //Testing relic
-    public Servo       ColorSensingServo     = null;
+    public Servo       ColorSensingServo     =null;
     public ColorSensor MineralColorSensor    =null;
+    public CRServo     PaddleServo           =null;
 
     /* local OpMode members. */
     HardwareMap hwMap           =  null;
@@ -78,9 +81,12 @@ public class JK_HardwareBenchbot
 
         ColorSensingServo = hwMap.get(Servo.class, "ColorSensingServo");
         MineralColorSensor = hwMap.get(ColorSensor.class, "MineralColorSensor");
-        MineralColorSensor.enableLed(true);
+        PaddleServo = hwMap.get(CRServo.class, "PaddleServo");
+        MineralColorSensor.enableLed(false);
         ColorSensingServo.setDirection(Servo.Direction.FORWARD);
         ColorSensingServo.setPosition(0.0);
+        PaddleServo.setDirection(DcMotorSimple.Direction.FORWARD);
+        PaddleServo.setPower(0);
     }
  }
 

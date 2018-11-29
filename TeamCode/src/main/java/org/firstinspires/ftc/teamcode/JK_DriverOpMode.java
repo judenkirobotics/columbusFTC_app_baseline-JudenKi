@@ -34,6 +34,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
@@ -158,16 +159,11 @@ public class JK_DriverOpMode extends LinearOpMode {
         double rightDriveCmd      = 0;
         double armMotorCmd        = 0;
         double horizontalArmCmd   = 0;
-        double loaderMotorCmd     = 0;
-        double rampMotorCmd       = 0;
-        double extensionMotorCmd  = 0;
+        double armPos             = robot.ColorSensingServo.getPosition();
+        double maxArmPos          = robot.ColorSensingServo.MAX_POSITION;
+        double minArmPos          = robot.ColorSensingServo.MIN_POSITION;
 
         // State variables
-        boolean rampDeployed = false;  //make sticky
-        boolean rampBackoff  = false;  // make sticky
-        int     extensionCount = 0;
-        int     backoffCount   = 5;    //Backoff for five ticks
-
 
 
 
@@ -239,21 +235,19 @@ public class JK_DriverOpMode extends LinearOpMode {
              ****************************************************/
                 if (CurrentTime - LastController > CONTROLLERPERIOD) {
                     LastController = CurrentTime;
+
+                    //Get controller inputs for buttons and bumpers, may need to
+                    //add debounce if spurious button push would cause bad
+                    //performance.
+
                     g1_LeftX = gamepad1.left_stick_x;
                     g1_LeftY = gamepad1.left_stick_y;
-                    //g2_LeftY = gamepad2.left_stick_y;
                     g1_RightX = gamepad1.right_stick_x;
                     g1_RightY = gamepad1.right_stick_y;
                     g1_A = gamepad1.a;
                     g1_B = gamepad1.b;
                     g1_X = gamepad1.x;
                     g1_Y = gamepad1.y;
-                    //g2_RightY = gamepad2.right_stick_y;
-                    //Get controller inputs for buttons and bumpers, may need to
-                    //add debounce if spurious button push would cause bad
-                    //performance.
-                    /*
-
                     g1_DD = gamepad1.dpad_down;
                     g1_DL = gamepad1.dpad_left;
                     g1_DR = gamepad1.dpad_right;
@@ -261,9 +255,15 @@ public class JK_DriverOpMode extends LinearOpMode {
                     g1_RB = gamepad1.right_bumper;
                     g1_LB = gamepad1.left_bumper;
                     g1_RT = gamepad1.right_trigger;
-                    g1_LT = gamepad1.left_trigger;*/
+                    g1_LT = gamepad1.left_trigger;
 
-                   /* g2_A = gamepad2.a;
+
+
+                    g2_RightY = gamepad2.right_stick_y;
+                    g2_LeftY = gamepad2.left_stick_y;
+                    g2_RightX = gamepad2.right_stick_x;
+                    g2_LeftX = gamepad2.left_stick_x;
+                    g2_A = gamepad2.a;
                     g2_B = gamepad2.b;
                     g2_X = gamepad2.x;
                     g2_Y = gamepad2.y;
@@ -274,7 +274,7 @@ public class JK_DriverOpMode extends LinearOpMode {
                     g2_RB = gamepad2.right_bumper;
                     g2_LB = gamepad2.left_bumper;
                     g2_RT = gamepad2.right_trigger;
-                    g2_LT = gamepad2.left_trigger;*/
+                    g2_LT = gamepad2.left_trigger;
                 }
 
         /*  ***********************************************************************
@@ -300,12 +300,6 @@ public class JK_DriverOpMode extends LinearOpMode {
                         // if conditions demand it.
                         double driveMax      = 1;
                         double driveMin      = -1;
-                       /* double rampMin       = -0.4;
-                        double rampMax       = 0.4;
-                        double extensionMin  = -1;
-                        double extensionMax  =  1;
-                        double feederMin     = -1;
-                        double feederMax     =  1;*/
 
                         // mapping inputs to motor commands - cube them to desensetize them around
                         // the 0,0 point.  Switching to single stick operation ought to be pretty
@@ -320,14 +314,6 @@ public class JK_DriverOpMode extends LinearOpMode {
                         leftDriveCmd = Range.clip(g1_LeftY, driveMin, driveMax);
                         rightDriveCmd = Range.clip(g1_RightY, driveMin, driveMax);
 
-                        //Set loader motors to no power, if either trigger is pressed change power
-                       /* loaderMotorCmd    = 0;
-                        if (g2_LT > 0) {
-                            loaderMotorCmd = feederMax;
-                        }
-                        if (g2_RT > 0) {
-                            loaderMotorCmd = feederMin;
-                        }*/
 
 
                         //Set particle grabber to no power,
@@ -346,32 +332,32 @@ public class JK_DriverOpMode extends LinearOpMode {
                         else if (g1_Y) {
                             horizontalArmCmd = -0.5;
                         }
-                       //rampMotorCmd = g2_RightY*g2_RightY*g2_RightY;
-                       /* g2_LeftY = g2_LeftY * g2_LeftY * g2_LeftY;
-                        g2_RightY = g2_RightY*g2_RightY*g2_RightY;
-                        if (Math.abs(g2_RightY) > 0.05){
-                            rampMotorCmd = g2_RightY * 0.3;
+
+
+                        // Mapping for COlor Sensing Paddle and the Arm
+                        if (g2_A) {
+                            robot.PaddleServo.setPower(1.0);
+                        }
+                         else if (g2_B) {
+                            robot.PaddleServo.setPower(-1.0);
                         }
                         else {
-                            rampMotorCmd = g2_LeftY;
-                        } */
+                            robot.PaddleServo.setPower(0.0);
+                        }
 
-                        //Only energize the extension motor if the state indicates it is not
-                        //deployed
-                       /* extensionMotorCmd = 0;
-                        if (rampDeployed == false) {
-                            if (g2_RB) {
-                                extensionMotorCmd = extensionMax;
+                        if (g2_X) {
+                            armPos += 0.05;
+                            if (armPos > maxArmPos) {
+                                armPos = maxArmPos;
                             }
                         }
-                        // Backoff the extension motor to reduce tension in frame
-                        if ((rampDeployed == true) && (rampBackoff == false)) {
-                            extensionCount = extensionCount +1;
-                            if (extensionCount > backoffCount) {
-                                rampBackoff = true;
+                        if (g2_Y) {
+                            armPos -= 0.05;
+                            if (armPos < minArmPos) {
+                                armPos = minArmPos;
                             }
-                            extensionMotorCmd = extensionMin;
-                        }*/
+                        }
+
 
 
                     }                    // END NAVIGATION
@@ -419,6 +405,7 @@ public class JK_DriverOpMode extends LinearOpMode {
                         robot.rightDrive.setPower(leftDriveCmd);
                        // robot.horizontalMotor.setPower(horizontalArmCmd);
                        // robot.armMotor.setPower(armMotorCmd);
+                        robot.ColorSensingServo.setPosition(armPos);
 
                         //robot.extensionMotor.setPower(extensionMotorCmd);
                         //robot.rampMotor.setPower(rampMotorCmd);
@@ -438,15 +425,9 @@ public class JK_DriverOpMode extends LinearOpMode {
                         LastTelemetry = CurrentTime;
                         telemetry.addData("Left Motor Power:       ", leftDriveCmd);
                         telemetry.addData("Right Motor Power:      ", rightDriveCmd);
-                        /*telemetry.addData("Ramp Motor Power:       ", rampMotorCmd);
-                        telemetry.addData("Loader Motor Power:     ", loaderMotorCmd);
-                        telemetry.addData("Extension Motor Power:  ", extensionMotorCmd);
-                        telemetry.addData("Left Trigger  ", g1_LT);
-                        telemetry.addData("Right Trigger ", g1_RT);*/
-                      /*  telemetry.addData("Left Bumper   ", g1_LB);
-                        telemetry.addData("Right Bumper  ", g1_RB);
-                        telemetry.addData("A             ", g1_A);
-                        telemetry.addData("B             ", g1_B);*/
+                        telemetry.addData("Paddle Servo ", robot.PaddleServo.getPower());
+                        telemetry.addData("Arm Servo ", robot.ColorSensingServo.getPosition());
+                        telemetry.addData("Arm Servo ", armPos);
                         telemetry.update();
 
                         //telemetry.update();

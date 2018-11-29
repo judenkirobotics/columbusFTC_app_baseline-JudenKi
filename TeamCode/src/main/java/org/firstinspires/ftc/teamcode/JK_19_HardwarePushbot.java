@@ -26,7 +26,10 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */package org.firstinspires.ftc.teamcode;
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -55,6 +58,9 @@ public class JK_19_HardwarePushbot
     public DcMotor     rightDrive          = null;
     public DcMotor     horizontalMotor           = null;
     public DcMotor     armMotor          = null;
+    public Servo       ColorSensingServo     =null;
+    public ColorSensor MineralColorSensor    =null;
+    public CRServo     PaddleServo           =null;
     //public Servo       arm                 = null;
    // public DcMotor     leftRear            = null;
     //public DcMotor     rightRear           = null;
@@ -120,6 +126,15 @@ public class JK_19_HardwarePushbot
      //   extensionMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         //test
     //    relicExtendMotorCmd.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        ColorSensingServo = hwMap.get(Servo.class, "ColorSensingServo");
+        MineralColorSensor = hwMap.get(ColorSensor.class, "MineralColorSensor");
+        PaddleServo = hwMap.get(CRServo.class, "PaddleServo");
+        MineralColorSensor.enableLed(false);
+        ColorSensingServo.setDirection(Servo.Direction.FORWARD);
+        ColorSensingServo.setPosition(0.0);
+        PaddleServo.setDirection(DcMotorSimple.Direction.FORWARD);
+        PaddleServo.setPower(0);
 
 
         //Define and Initialize Sensors

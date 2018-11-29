@@ -28,21 +28,20 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
-
-import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
 
 //import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 //@Autonomous(name="Pushbot: Auto Drive By Encoder", group="Pushbot")
 
-@Autonomous(name="JK Autonomous", group="Pushbot")
+@Autonomous(name="JK Autonomous Zone Side", group="Pushbot")
 @SuppressWarnings("WeakerAccess")
 //@TeleOp(name = "Time Slice Op Mode", group = "HardwarePushbot")
 //@Disabled
-public class JK_AtonomousBenchBot extends LinearOpMode {
+public class JK_AutonomousZone extends LinearOpMode {
 
-    JK_HardwareBenchbot robot   = new JK_HardwareBenchbot();   // Use a Pushbot's hardware
+    JK_19_HardwarePushbot robot   = new JK_19_HardwarePushbot();   // Use a Pushbot's hardware
     final long SENSORPERIOD = 50;
     final long ENCODERPERIOD = 50;
     final long SERVOPERIOD = 50;
@@ -50,24 +49,37 @@ public class JK_AtonomousBenchBot extends LinearOpMode {
     final long MOTORPERIOD = 50;
     //final long CONTROLLERPERIOD = 50;
     final long TELEMETRYPERIOD = 1000;
+    final double MAX_S_POS = 0.85;
+
+    boolean gold_detected = false;
 
     float stageTime = 0;
     final int SWG = 0;
     final int LDR = 1;
     final int FWD = 2;
-    final int CRB = 3;
+    final int KIK = 3;
     final int WAIT = 4;
     final int RMP = 5;
+    final float MAX_RED_GREEN = (float)2.1;
+    final float MIN_RED_GREEN = (float)0.95;
+    final float MAX_BLUE_GREEN = (float)0.9;
+    final float MIN_BLUE_GREEN = (float)0.0;
+
     int CurrentAutoState = 0;
-    int[] stage =          {FWD,   SWG, FWD, SWG,  WAIT};
-    long[] f_power =       {20,      0,  10,   0,     0};
-    long[] swing_power =   { 0,      5,   0,   5,     0};
-    double[] stageLim   =  {600, 25000, 750, 600, 30000};
+    int[] stage =       {FWD,  SWG,  FWD, FWD,   KIK,  WAIT};
+    double[] l_power =  {-0.5,   0, -0.5, -0.5,    0,     0};
+    double[] r_power =  {-0.5,   0,  0.5, -0.5,    0,     0};
+    long[] paddle    =  { 0,     0,    0,    0,    1,     0};
+    double[]paddleTime = { 0,    0,    0,   0,  1000,     0};
+    double[] stageLim = {500, 4500,  700,  700, 7500, 30000};
 
     int red;
     int green;
     int blue;
     double sPos = 0.0;
+    double pPower = 0.0;
+    double leftMotorCmd = 0.0;
+    double rightMotorCmd = 0.0;
 
 
     //@Override
@@ -103,6 +115,7 @@ public class JK_AtonomousBenchBot extends LinearOpMode {
         long LastNav = CurrentTime + 15;
         long LastMotor = CurrentTime + 20;
         //long LastController = CurrentTime + 7;
+        long paddleDur = 0;
         long LastTelemetry = CurrentTime + 17;
 
         sPos = robot.ColorSensingServo.getPosition();  // Set initial value
@@ -181,37 +194,73 @@ public class JK_AtonomousBenchBot extends LinearOpMode {
                     //
                     //Drive forward a little bit
                     case FWD:
+
+                        if ((stageTime >= stageLim[CurrentAutoState]) ||
+                                (gold_detected)){
+                            leftMotorCmd = 0;
+                            rightMotorCmd = 0;
+                            stageTime = 0;
+                            CurrentAutoState++;
+                        }
+                        else if (!gold_detected){
+                            leftMotorCmd = l_power[CurrentAutoState];
+                            rightMotorCmd = r_power[CurrentAutoState];
+                        }
+                        if(leftMotorCmd == rightMotorCmd) { // motor power with same signs
+                            telemetry.addData("Moving Forward", red); // telemetry for debugging
+                        }
+                        else {
+                            telemetry.addData("Turning", red);
+                        }
                         break;
                     // Swing arm looking for gold block, if found knock it off
                     case SWG:
-                        telemetry.addData("RED         ", red);
-                        telemetry.addData("GREEN       ", green);
-                        telemetry.addData("BLUE        ", blue);
-                        robot.ColorSensingServo.setPosition(sPos);
-                        if (detectGold(red, green, blue)){
-
-                            telemetry.addData("GOLD GOLD GOLD!!!!!!", red);
-                            robot.PaddleServo.setPower(255);
+                        if (!gold_detected) {
+                            leftMotorCmd = 0.0;
+                            rightMotorCmd = 0.0;
+                            telemetry.addData("RED         ", red);
+                            telemetry.addData("GREEN       ", green);
+                            telemetry.addData("BLUE        ", blue);
+                            robot.ColorSensingServo.setPosition(sPos);
+                            gold_detected = gold_detected || detectGold(red, green, blue);
+                            sPos = sPos + 0.003;
+                            telemetry.addData("Swinging, NOT GOLD", red);
                         }
                         else {
-                            sPos = sPos + 0.005;
-                            robot.ColorSensingServo.setPosition(sPos);
-                            telemetry.addData("NOT GOLD",red);
+                                telemetry.addData("GOLD GOLD GOLD!!!!!!", red);
+                                pPower = 1.0;
                         }
 
+                        if ((gold_detected) ||
+                                (sPos >= MAX_S_POS) ||
+                                (stageTime >= stageLim[CurrentAutoState])) {
 
-
+                            stageTime = 0;
+                            CurrentAutoState++;
+                        }
                         break;
                     // If no gold block found turn
-                    case CRB:
+                    case KIK:
+                        if (stageTime >= stageLim[CurrentAutoState]) {
+                            stageTime = 0;
+                            CurrentAutoState++;
+                        }
+                        else if ((stageTime <= paddleTime[CurrentAutoState]) &&
+                                (gold_detected)){
+                            pPower = paddle[CurrentAutoState];
+                            telemetry.addData("GOLD n Kickin'!!!", red);
+                        }
+                        else {
+                            pPower = 0.0;
+                        }
                         break;
-                    //If no gold block found drive forward
-                    case LDR:
-                        break;
-                    //If no gold block found swing arm
-                    case RMP:
-                        break;
+
                     case WAIT:
+                        pPower = 0;
+                        sPos = 0.1;
+                        leftMotorCmd = 0.0;
+                        rightMotorCmd = 0.0;
+                        telemetry.addData("Waiting... ", red);
                         break;
                     default:
                         break;
@@ -252,6 +301,8 @@ public class JK_AtonomousBenchBot extends LinearOpMode {
             if (CurrentTime - LastMotor > MOTORPERIOD) {
                 LastMotor = CurrentTime;
 
+                robot.leftDrive.setPower(leftMotorCmd);
+                robot.rightDrive.setPower(rightMotorCmd);
 
             }
 
@@ -260,7 +311,11 @@ public class JK_AtonomousBenchBot extends LinearOpMode {
              *       Inputs:  Motor power commands
              *       Outputs: Physical interface to the servos
              ****************************************************/
-
+            if (CurrentTime - LastServo > SERVOPERIOD) {
+                LastServo = CurrentTime;
+                robot.ColorSensingServo.setPosition(sPos);
+                robot.PaddleServo.setPower(pPower);
+            }
 
 
             /* ***************************************************
@@ -274,6 +329,9 @@ public class JK_AtonomousBenchBot extends LinearOpMode {
 
 
             if (CurrentTime - LastTelemetry > TELEMETRYPERIOD) {
+                telemetry.addData("RED: ", red);
+                telemetry.addData("GREEN: ", green);
+                telemetry.addData("BLUE: ", blue);
                 LastTelemetry = CurrentTime;
                 telemetry.update();
             }
