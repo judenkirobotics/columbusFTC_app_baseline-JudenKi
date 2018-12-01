@@ -111,12 +111,9 @@ public class JK_AutonomousZone extends LinearOpMode {
         long CurrentTime = System.currentTimeMillis();
 
         long LastSensor = CurrentTime;
-        long LastEncoderRead = CurrentTime + 5;
         long LastServo = CurrentTime + 10;
         long LastNav = CurrentTime + 15;
         long LastMotor = CurrentTime + 20;
-        //long LastController = CurrentTime + 7;
-        long paddleDur = 0;
         long LastTelemetry = CurrentTime + 17;
 
         sPos = robot.ColorSensingServo.getPosition();  // Set initial value
@@ -166,9 +163,6 @@ public class JK_AutonomousZone extends LinearOpMode {
                 LastNav = CurrentTime;
                 stageTime += NAVPERIOD;
                 telemetry.addData("Current State: ", CurrentAutoState);
-                telemetry.addData("RED         ", red);
-                telemetry.addData("GREEN       ", green);
-                telemetry.addData("BLUE        ", blue);
                 telemetry.addData("sPos        ", sPos);
                 switch (stage[CurrentAutoState]) {
                     case FWD:
@@ -220,14 +214,10 @@ public class JK_AutonomousZone extends LinearOpMode {
                         break;
 
                     case WAIT:
-                        if (stageTime >= stageLim[CurrentAutoState]){
-                        }
-                        else {
-                            pPower = 0;
-                            leftMotorCmd = 0.0;
-                            rightMotorCmd = 0.0;
-                            telemetry.addData("Waiting... ", red);
-                        }
+                        pPower = 0;
+                        leftMotorCmd = 0.0;
+                        rightMotorCmd = 0.0;
+                        telemetry.addData("Waiting... ", red);
                         break;
                     default:
                         break;
