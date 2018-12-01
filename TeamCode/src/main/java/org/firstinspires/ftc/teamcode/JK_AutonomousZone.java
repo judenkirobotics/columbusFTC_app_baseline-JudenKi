@@ -43,7 +43,7 @@ public class JK_AutonomousZone extends LinearOpMode {
 
     JK_19_HardwarePushbot robot   = new JK_19_HardwarePushbot();   // Use a Pushbot's hardware
     final long SENSORPERIOD = 50;
-    final long ENCODERPERIOD = 50;
+    //final long ENCODERPERIOD = 50;
     final long SERVOPERIOD = 50;
     final long NAVPERIOD = 10;
     final long MOTORPERIOD = 50;
@@ -52,26 +52,29 @@ public class JK_AutonomousZone extends LinearOpMode {
     final double MAX_S_POS = 0.85;
 
     boolean gold_detected = false;
+    boolean third_position = true;
 
     float stageTime = 0;
     final int SWG = 0;
-    final int LDR = 1;
-    final int FWD = 2;
-    final int KIK = 3;
-    final int WAIT = 4;
-    final int RMP = 5;
+    final int FWD = 1;
+    final int KIK = 2;
+    final int WAIT = 3;
     final float MAX_RED_GREEN = (float)2.1;
     final float MIN_RED_GREEN = (float)0.95;
     final float MAX_BLUE_GREEN = (float)0.9;
     final float MIN_BLUE_GREEN = (float)0.0;
+    final double SWING_HOME = 0.1;
+    final double SWING_TRANSIT = 0.4;
+    final long KIK_TRANSIT_TIME = 250;
+    final long SWING_TRANSIT_TIME = KIK_TRANSIT_TIME + 200;
 
     int CurrentAutoState = 0;
-    int[] stage =       {FWD,  SWG,  FWD, FWD,   KIK,  WAIT};
-    double[] l_power =  {-0.5,   0, -0.5, -0.5,    0,     0};
-    double[] r_power =  {-0.5,   0,  0.5, -0.5,    0,     0};
-    long[] paddle    =  { 0,     0,    0,    0,    1,     0};
-    double[]paddleTime = { 0,    0,    0,   0,  1000,     0};
-    double[] stageLim = {500, 4500,  700,  700, 7500, 30000};
+    int[] stage =       {FWD,  SWG, FWD,  FWD,   KIK, WAIT};
+    double[] l_power =  {-0.5,   0,-0.5, -0.3,     0,    0};
+    double[] r_power =  {-0.5,   0, 0.5, -0.3,     0,    0};
+    long[] paddle    =  { 0,     0,   0,    1,     1,    0};
+    //double[]paddleTime = { 0,    0,   0,    0,  1000,    0};
+    double[] stageLim = {470, 4500, 740, 1200,  1200, 1000};
 
     int red;
     int green;
@@ -81,15 +84,13 @@ public class JK_AutonomousZone extends LinearOpMode {
     double leftMotorCmd = 0.0;
     double rightMotorCmd = 0.0;
 
-
     //@Override
-    // 2.1, 1.2, 0.9
     public boolean detectGold(int r, int g, int b){
         boolean gold = false; //default value
         if (g > 0){
-            if (((float)(r)/(float)(g) < 2.1) &&
-                ((float)(r)/(float)(g) > 0.95) &&
-                    ((float)(b)/(float)(g) < 1.0)){
+            if (((float)(r)/(float)(g) < MAX_RED_GREEN) &&
+                ((float)(r)/(float)(g) > MIN_RED_GREEN) &&
+                ((float)(b)/(float)(g) < MAX_BLUE_GREEN)){
                 gold = true; // changes to true only if the if statement is satisfied
             }
         }
@@ -126,27 +127,16 @@ public class JK_AutonomousZone extends LinearOpMode {
 
         ElapsedTime runtime = new ElapsedTime();
         //A Timing System By Katherine Jeffrey,and Alexis
-        // long currentThreadTimeMillis (0);
-        //
-
         // Wait for the game to start (driver presses PLAY)
 
         waitForStart();
         runtime.reset();
-  /* ***********************************************************************************************
-   *****************************                CODE          ****************
-   ********************
-   ************************************************************************************************/
-
-
         /* ************************************************************
          *            Everything below here  \\ press START           *
          **************************************************************/
-
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
             CurrentTime = System.currentTimeMillis();
-  //          telemetry.addData("Current Time: ", CurrentTime);
 
             //Loop For Timing System
             /* ***************************************************
@@ -159,7 +149,6 @@ public class JK_AutonomousZone extends LinearOpMode {
                 red = robot.MineralColorSensor.red();
                 green = robot.MineralColorSensor.green();
                 blue = robot.MineralColorSensor.blue();
-
             }
 
         /*  ***********************************************************************
@@ -174,98 +163,75 @@ public class JK_AutonomousZone extends LinearOpMode {
              *                         motor
              ****************************************************/
             if (CurrentTime - LastNav > NAVPERIOD) {
-                boolean foundGold = false;
                 LastNav = CurrentTime;
                 stageTime += NAVPERIOD;
-                boolean stageComplete = false;
-                // init drive min and max to default values.  We'll reset them to other numbers
-                // if conditions demand it.
-
-                float rampCmd = 0;
-
                 telemetry.addData("Current State: ", CurrentAutoState);
                 telemetry.addData("RED         ", red);
                 telemetry.addData("GREEN       ", green);
                 telemetry.addData("BLUE        ", blue);
                 telemetry.addData("sPos        ", sPos);
-                float BG_ratio = (float)blue/(float)green;
-
                 switch (stage[CurrentAutoState]) {
-                    //
-                    //Drive forward a little bit
                     case FWD:
-
                         if ((stageTime >= stageLim[CurrentAutoState]) ||
                                 (gold_detected)){
                             leftMotorCmd = 0;
                             rightMotorCmd = 0;
+                            pPower = 0;
                             stageTime = 0;
                             CurrentAutoState++;
                         }
                         else if (!gold_detected){
+                            if (third_position) {
+                                if (stageTime > SWING_TRANSIT_TIME) {
+                                    sPos = SWING_TRANSIT;
+                                }
+                                if (stageTime > KIK_TRANSIT_TIME) {
+                                    pPower = paddle[CurrentAutoState];
+                                }
+                            }
                             leftMotorCmd = l_power[CurrentAutoState];
                             rightMotorCmd = r_power[CurrentAutoState];
                         }
-                        if(leftMotorCmd == rightMotorCmd) { // motor power with same signs
-                            telemetry.addData("Moving Forward", red); // telemetry for debugging
-                        }
-                        else {
-                            telemetry.addData("Turning", red);
-                        }
+
                         break;
                     // Swing arm looking for gold block, if found knock it off
                     case SWG:
-                        if (!gold_detected) {
-                            leftMotorCmd = 0.0;
-                            rightMotorCmd = 0.0;
-                            telemetry.addData("RED         ", red);
-                            telemetry.addData("GREEN       ", green);
-                            telemetry.addData("BLUE        ", blue);
-                            robot.ColorSensingServo.setPosition(sPos);
+                        if ((stageTime > stageLim[CurrentAutoState]) ||
+                            (gold_detected) ||
+                            (sPos >= MAX_S_POS)) {
+                            stageTime = 0;
+                            CurrentAutoState++;
+                        }
+                        else {
                             gold_detected = gold_detected || detectGold(red, green, blue);
                             sPos = sPos + 0.003;
-                            telemetry.addData("Swinging, NOT GOLD", red);
-                        }
-                        else {
-                                telemetry.addData("GOLD GOLD GOLD!!!!!!", red);
-                                pPower = 1.0;
-                        }
-
-                        if ((gold_detected) ||
-                                (sPos >= MAX_S_POS) ||
-                                (stageTime >= stageLim[CurrentAutoState])) {
-
-                            stageTime = 0;
-                            CurrentAutoState++;
                         }
                         break;
-                    // If no gold block found turn
                     case KIK:
-                        if (stageTime >= stageLim[CurrentAutoState]) {
+                        if ((stageTime >= stageLim[CurrentAutoState]) ||
+                            (!gold_detected)){
                             stageTime = 0;
+                            pPower = 0;
                             CurrentAutoState++;
                         }
-                        else if ((stageTime <= paddleTime[CurrentAutoState]) &&
-                                (gold_detected)){
-                            pPower = paddle[CurrentAutoState];
-                            telemetry.addData("GOLD n Kickin'!!!", red);
-                        }
                         else {
-                            pPower = 0.0;
+                            pPower = paddle[CurrentAutoState];
                         }
                         break;
 
                     case WAIT:
-                        pPower = 0;
-                        sPos = 0.1;
-                        leftMotorCmd = 0.0;
-                        rightMotorCmd = 0.0;
-                        telemetry.addData("Waiting... ", red);
+                        if (stageTime >= stageLim[CurrentAutoState]){
+                        }
+                        else {
+                            pPower = 0;
+                            leftMotorCmd = 0.0;
+                            rightMotorCmd = 0.0;
+                            telemetry.addData("Waiting... ", red);
+                        }
                         break;
                     default:
                         break;
                 }
-                telemetry.addData("RMPcmdbeforereset", rampCmd);
                 telemetry.update();
                 if (stageTime > stageLim[CurrentAutoState]) {
                     stageTime = 0;
@@ -273,25 +239,15 @@ public class JK_AutonomousZone extends LinearOpMode {
                     CurrentAutoState = Range.clip(CurrentAutoState,0,WAIT);
                     telemetry.addData("Current State: ", CurrentAutoState);
                 }
-                // mapping inputs to servo command
-
-
             }
             // END NAVIGATION
 
-
         /*   ^^^^^^^^^^^^^^^^  THIS SECTION IS MAPPING INPUTS TO OUTPUTS   ^^^^^^^^^^^^^^^*/
         /* ********************************************************************************/
-
-
-
-
         /*  ***********************************************************************
          * VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
          *           ALL OF THE STUFF BELOW HERE IS WRITING OUTPUTS
          * VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
-
-
 
             /* ***************************************************
              *                MOTOR OUTPUT
@@ -323,11 +279,6 @@ public class JK_AutonomousZone extends LinearOpMode {
              *       Inputs:  telemetry structure
              *       Outputs: command telemetry output to phone
              ****************************************************/
-
-
-
-
-
             if (CurrentTime - LastTelemetry > TELEMETRYPERIOD) {
                 telemetry.addData("RED: ", red);
                 telemetry.addData("GREEN: ", green);
