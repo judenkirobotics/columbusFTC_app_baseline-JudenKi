@@ -48,33 +48,33 @@ public class JK_AutonomousZone extends LinearOpMode {
     final long NAVPERIOD = 10;
     final long MOTORPERIOD = 50;
     //final long CONTROLLERPERIOD = 50;
-    final long TELEMETRYPERIOD = 1000;
+    final long TELEMETRYPERIOD = 500;
     final double MAX_S_POS = 0.85;
+    final double SWING_TRANSIT = 0.55;
 
     boolean gold_detected = false;
-    boolean third_position = true;
+    boolean swing_complete = false;
 
     float stageTime = 0;
     final int SWG = 0;
     final int FWD = 1;
     final int KIK = 2;
-    final int WAIT = 3;
-    final float MAX_RED_GREEN = (float)2.1;
-    final float MIN_RED_GREEN = (float)0.95;
-    final float MAX_BLUE_GREEN = (float)0.9;
+    final int WAIT = 3; // MUST be highest numbered state!!
+    final float MAX_RED_GREEN = (float)1.75;
+    final float MIN_RED_GREEN = (float)1.2;
+    final float MAX_BLUE_GREEN = (float)0.65;
     final float MIN_BLUE_GREEN = (float)0.0;
     final double SWING_HOME = 0.1;
-    final double SWING_TRANSIT = 0.4;
-    final long KIK_TRANSIT_TIME = 250;
-    final long SWING_TRANSIT_TIME = KIK_TRANSIT_TIME + 200;
+    final long KIK_TRANSIT_TIME = 220;
+    final long SWING_TRANSIT_TIME = KIK_TRANSIT_TIME + 100;
 
     int CurrentAutoState = 0;
     int[] stage =       {FWD,  SWG, FWD,  FWD,   KIK, WAIT};
     double[] l_power =  {-0.5,   0,-0.5, -0.3,     0,    0};
     double[] r_power =  {-0.5,   0, 0.5, -0.3,     0,    0};
-    long[] paddle    =  { 0,     0,   0,    1,     1,    0};
+    long[] paddle    =  { 0,     0,   0,   -1,     1,    0};
     //double[]paddleTime = { 0,    0,   0,    0,  1000,    0};
-    double[] stageLim = {470, 4500, 740, 1200,  1200, 1000};
+    double[] stageLim = {440, 4500, 650, 1200,  1200, 1000};
 
     int red;
     int green;
@@ -109,7 +109,6 @@ public class JK_AutonomousZone extends LinearOpMode {
         telemetry.update();
 
         long CurrentTime = System.currentTimeMillis();
-
         long LastSensor = CurrentTime;
         long LastServo = CurrentTime + 10;
         long LastNav = CurrentTime + 15;
@@ -161,21 +160,22 @@ public class JK_AutonomousZone extends LinearOpMode {
              ****************************************************/
             if (CurrentTime - LastNav > NAVPERIOD) {
                 LastNav = CurrentTime;
+                boolean stage_complete = false;
                 stageTime += NAVPERIOD;
-                telemetry.addData("Current State: ", CurrentAutoState);
+                telemetry.addData("Current index: ", CurrentAutoState);
+                telemetry.addData("Current State: ", stage[CurrentAutoState]);
                 telemetry.addData("sPos        ", sPos);
+                telemetry.addData("RED: ", red);
+                telemetry.addData("GREEN: ", green);
+                telemetry.addData("BLUE: ", blue);
+
                 switch (stage[CurrentAutoState]) {
                     case FWD:
-                        if ((stageTime >= stageLim[CurrentAutoState]) ||
-                                (gold_detected)){
-                            leftMotorCmd = 0;
-                            rightMotorCmd = 0;
-                            pPower = 0;
-                            stageTime = 0;
-                            CurrentAutoState++;
+                        if (gold_detected){
+                            stage_complete = true;
                         }
-                        else if (!gold_detected){
-                            if (third_position) {
+                        else {
+                            if ((!gold_detected) && (swing_complete)){
                                 if (stageTime > SWING_TRANSIT_TIME) {
                                     sPos = SWING_TRANSIT;
                                 }
@@ -186,15 +186,12 @@ public class JK_AutonomousZone extends LinearOpMode {
                             leftMotorCmd = l_power[CurrentAutoState];
                             rightMotorCmd = r_power[CurrentAutoState];
                         }
-
                         break;
                     // Swing arm looking for gold block, if found knock it off
                     case SWG:
-                        if ((stageTime > stageLim[CurrentAutoState]) ||
-                            (gold_detected) ||
-                            (sPos >= MAX_S_POS)) {
-                            stageTime = 0;
-                            CurrentAutoState++;
+                        if ((sPos >= MAX_S_POS) || (gold_detected)) {
+                            stage_complete = true;
+                            swing_complete = true;
                         }
                         else {
                             gold_detected = gold_detected || detectGold(red, green, blue);
@@ -202,11 +199,8 @@ public class JK_AutonomousZone extends LinearOpMode {
                         }
                         break;
                     case KIK:
-                        if ((stageTime >= stageLim[CurrentAutoState]) ||
-                            (!gold_detected)){
-                            stageTime = 0;
-                            pPower = 0;
-                            CurrentAutoState++;
+                        if (!gold_detected){
+                            stage_complete = true;
                         }
                         else {
                             pPower = paddle[CurrentAutoState];
@@ -222,12 +216,15 @@ public class JK_AutonomousZone extends LinearOpMode {
                     default:
                         break;
                 }
-                telemetry.update();
-                if (stageTime > stageLim[CurrentAutoState]) {
+                if ((stageTime >= stageLim[CurrentAutoState]) ||
+                        (stage_complete)){
                     stageTime = 0;
-                    CurrentAutoState++;
-                    CurrentAutoState = Range.clip(CurrentAutoState,0,WAIT);
-                    telemetry.addData("Current State: ", CurrentAutoState);
+                    leftMotorCmd = 0;
+                    rightMotorCmd = 0;
+                    pPower = 0;
+                    if (stage[CurrentAutoState] < WAIT) {
+                        CurrentAutoState ++;
+                    }
                 }
             }
             // END NAVIGATION
@@ -270,9 +267,6 @@ public class JK_AutonomousZone extends LinearOpMode {
              *       Outputs: command telemetry output to phone
              ****************************************************/
             if (CurrentTime - LastTelemetry > TELEMETRYPERIOD) {
-                telemetry.addData("RED: ", red);
-                telemetry.addData("GREEN: ", green);
-                telemetry.addData("BLUE: ", blue);
                 LastTelemetry = CurrentTime;
                 telemetry.update();
             }
