@@ -314,9 +314,8 @@ public class JK_Driver_Mecanum extends LinearOpMode {
                     robot.leftRear.setPower((rightRearCmd + rightRearCrab));
                     robot.rightRear.setPower((leftRearCmd + leftRearCrab));
 
-                    //robot.extensionMotor.setPower(extensionMotorCmd);
-                    //robot.rampMotor.setPower(rampMotorCmd);
-                    //robot.loaderMotor.setPower(loaderMotorCmd);
+
+
                 }
 
 

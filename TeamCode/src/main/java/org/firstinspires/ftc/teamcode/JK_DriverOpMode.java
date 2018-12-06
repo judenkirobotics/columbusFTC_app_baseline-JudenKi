@@ -157,8 +157,8 @@ public class JK_DriverOpMode extends LinearOpMode {
         // Variables to store actuator commands
         double leftDriveCmd       = 0;
         double rightDriveCmd      = 0;
-        double armMotorCmd        = 0;
-        double horizontalArmCmd   = 0;
+        double mineralCmd         = 0;
+        double paddleCmd          = 0;
         double armPos             = robot.ColorSensingServo.getPosition();
         double maxArmPos          = robot.ColorSensingServo.MAX_POSITION;
         double minArmPos          = robot.ColorSensingServo.MIN_POSITION;
@@ -316,33 +316,16 @@ public class JK_DriverOpMode extends LinearOpMode {
 
 
 
-                        //Set particle grabber to no power,
-                        // if either trigger is pressed change power
-                        armMotorCmd      = 0;
-                        horizontalArmCmd = 0;
-                        if (g1_A) {
-                            armMotorCmd = 0.50;
-                        }
-                        else if (g1_B) {
-                            armMotorCmd = -0.5;
-                        }
-                        if (g1_X) {
-                            horizontalArmCmd = 0.50;
-                        }
-                        else if (g1_Y) {
-                            horizontalArmCmd = -0.5;
-                        }
-
 
                         // Mapping for COlor Sensing Paddle and the Arm
                         if (g2_A) {
-                            robot.PaddleServo.setPower(1.0);
+                            paddleCmd = 1.0;
                         }
                          else if (g2_B) {
-                            robot.PaddleServo.setPower(-1.0);
+                            paddleCmd = -1.0;
                         }
                         else {
-                            robot.PaddleServo.setPower(0.0);
+                            paddleCmd = 0.0;
                         }
 
                         if (g2_X) {
@@ -358,6 +341,15 @@ public class JK_DriverOpMode extends LinearOpMode {
                             }
                         }
 
+                        if (g2_LB) {
+                            mineralCmd = 0.3;
+                        }
+                        else if (g2_RB) {
+                            mineralCmd = -0.3;
+                        }
+                        else {
+                            mineralCmd = 0.0;
+                        }
 
 
                     }                    // END NAVIGATION
@@ -395,21 +387,11 @@ public class JK_DriverOpMode extends LinearOpMode {
                         LastMotor = CurrentTime;
                         // Yes, we'll set the power each time, even if it's zero.
                         // this way we don't accidentally leave it somewhere.  Just simpler this way.
-                        //robot.leftDrive.setPower(leftDriveCmd);
-                        //robot.rightDrive.setPower(rightDriveCmd);
-
-                        // kludge fix for motor mapping
-                        //rightDriveCmd = (float)-1*rightDriveCmd;
-                        //leftDriveCmd = (float)-1*leftDriveCmd;
                         robot.leftDrive.setPower(rightDriveCmd);
                         robot.rightDrive.setPower(leftDriveCmd);
-                       // robot.horizontalMotor.setPower(horizontalArmCmd);
-                       // robot.armMotor.setPower(armMotorCmd);
                         robot.ColorSensingServo.setPosition(armPos);
-
-                        //robot.extensionMotor.setPower(extensionMotorCmd);
-                        //robot.rampMotor.setPower(rampMotorCmd);
-                        //robot.loaderMotor.setPower(loaderMotorCmd);
+                        robot.PaddleServo.setPower(paddleCmd);
+                        robot.mineralMotor.setPower(mineralCmd);
 
 
                     }

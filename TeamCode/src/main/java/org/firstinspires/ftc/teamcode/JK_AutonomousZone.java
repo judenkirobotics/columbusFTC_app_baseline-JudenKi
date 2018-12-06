@@ -66,16 +66,18 @@ public class JK_AutonomousZone extends LinearOpMode {
     final float MIN_BLUE_GREEN = (float)0.0;
     final double SWING_HOME = 0.1;
     final long KIK_TRANSIT_TIME = 220;
+    final long WALL_WARNING = 1000;
     final long SWING_TRANSIT_TIME = KIK_TRANSIT_TIME + 100;
 
     int CurrentAutoState = 0;
-    int[] stage =       {FWD,  SWG, FWD,  FWD,   KIK, WAIT};
-    double[] l_power =  {-0.5,   0,-0.5, -0.3,     0,    0};
-    double[] r_power =  {-0.5,   0, 0.5, -0.3,     0,    0};
-    long[] paddle    =  { 0,     0,   0,   -1,     1,    0};
-    //double[]paddleTime = { 0,    0,   0,    0,  1000,    0};
-    double[] stageLim = {440, 4500, 650, 1200,  1200, 1000};
+    int[] stage =       {FWD, SWG,   KIK, KIK, SWG, FWD,  FWD, FWD, FWD,  WAIT};
+    double[] l_power =  {-0.5,  0,     0,  0,    0, -0.5, -0.3,  0.5, 0.4,    0};
+    double[] r_power =  {-0.5,  0,     0,  0,    0,  0.5, -0.3, -0.5, 0.4,    0};
+    long[] paddle    =  { 0,    0,     1, -1,    0,    0,   -1,    0,   0,    0};
+    double[] stageLim = {440, 4500, 1200, 1000, 250, 700, 1450,  550, 1000, 20000};
 
+    //double[]paddleTime = { 0,    0,   0,    0,  1000,    0};
+    int gold_position = 1;
     int red;
     int green;
     int blue;
@@ -171,35 +173,42 @@ public class JK_AutonomousZone extends LinearOpMode {
 
                 switch (stage[CurrentAutoState]) {
                     case FWD:
-                        if (gold_detected){
-                            stage_complete = true;
-                        }
-                        else {
-                            if ((!gold_detected) && (swing_complete)){
-                                if (stageTime > SWING_TRANSIT_TIME) {
-                                    sPos = SWING_TRANSIT;
-                                }
-                                if (stageTime > KIK_TRANSIT_TIME) {
-                                    pPower = paddle[CurrentAutoState];
-                                }
+                        if ((!gold_detected) && (swing_complete) && (gold_position ==1)){
+
+                            if (stageTime > SWING_TRANSIT_TIME) {
+                                sPos = SWING_TRANSIT;
                             }
+                            if (stageTime > KIK_TRANSIT_TIME) {
+                                pPower = paddle[CurrentAutoState];
+                            }
+
                             leftMotorCmd = l_power[CurrentAutoState];
                             rightMotorCmd = r_power[CurrentAutoState];
+                        }
+                        if (stageTime > WALL_WARNING) {
+                            sPos = SWING_HOME;
+                            pPower = paddle[CurrentAutoState];
                         }
                         break;
                     // Swing arm looking for gold block, if found knock it off
                     case SWG:
-                        if ((sPos >= MAX_S_POS) || (gold_detected)) {
+                        boolean prev_gold_detected = gold_detected;
+                        gold_detected = gold_detected || detectGold(red, green, blue);
+
+                        if ((sPos >= MAX_S_POS) || (gold_detected && !prev_gold_detected)) {
                             stage_complete = true;
                             swing_complete = true;
+                            if (gold_detected) gold_position = (sPos < .6)? 2: 3;
+                        }
+                        else if (!prev_gold_detected) {
+                            sPos = sPos + 0.003;
                         }
                         else {
-                            gold_detected = gold_detected || detectGold(red, green, blue);
-                            sPos = sPos + 0.003;
+                            sPos = SWING_HOME;
                         }
                         break;
                     case KIK:
-                        if (!gold_detected){
+                        if ((!gold_detected) && (gold_position > 1)){
                             stage_complete = true;
                         }
                         else {

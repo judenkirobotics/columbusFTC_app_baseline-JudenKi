@@ -54,10 +54,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 public class JK_19_HardwarePushbot
 {
     /* Public OpMode members. */
-    public DcMotor     leftDrive           = null;
-    public DcMotor     rightDrive          = null;
-    public DcMotor     horizontalMotor           = null;
-    public DcMotor     armMotor          = null;
+    public DcMotor     leftDrive             = null;
+    public DcMotor     rightDrive            = null;
+    public DcMotor     mineralMotor       = null;
     public Servo       ColorSensingServo     =null;
     public ColorSensor MineralColorSensor    =null;
     public CRServo     PaddleServo           =null;
@@ -91,41 +90,25 @@ public class JK_19_HardwarePushbot
         // Define and Initialize Motors
         leftDrive  = hwMap.get(DcMotor.class, "left");
         rightDrive = hwMap.get(DcMotor.class, "right");
-        horizontalMotor  = hwMap.get(DcMotor.class, "horiz");
-        armMotor = hwMap.get(DcMotor.class, "arm");
-      //  rampMotor  = hwMap.get(DcMotor.class, "beltmotor");
-       // loaderMotor= hwMap.get(DcMotor.class, "loadermotor");
-      //  extensionMotor = hwMap.get(DcMotor.class, "pullymotor");
-        //relic test
-     //   relicExtendMotorCmd = hwMap.get(DcMotor.class, "relicExtendMotor");
-       // relicClawServo = hwMap.get(Servo.class, "relicClawServo");
-      //  relicPivotServo = hwMap.get(Servo.class, "relicPivotServo");
-      //  relicExtendMotorCmd.setPower(0);
-       // relicClawServo.setPosition(0);
-      //  relicPivotServo.setPosition(0);
+        mineralMotor  = hwMap.get(DcMotor.class, "mineral");
+
 
         //leftArm    = hwMap.get(DcMotor.class, "left_arm");
         leftDrive.setDirection(DcMotor.Direction.FORWARD); // Set to REVERSE if using AndyMark motors
         rightDrive.setDirection(DcMotor.Direction.REVERSE);// Set to FORWARD if using AndyMark motors
-        //arm.setDirection(Servo.Direction.REVERSE);
-      //  leftRear.setDirection(DcMotor.Direction.FORWARD); // Set to REVERSE if using AndyMark motors
-       // rightRear.setDirection(DcMotor.Direction.REVERSE);// Set to FORWARD if using AndyMark motors
-       // rampMotor.setDirection(DcMotor.Direction.FORWARD);
-      //  loaderMotor.setDirection(DcMotor.Direction.FORWARD);
-      //  extensionMotor.setDirection(DcMotor.Direction.FORWARD);
+        mineralMotor.setDirection(DcMotorSimple.Direction.FORWARD);
 
         // Set all motors to zero power
         leftDrive.setPower(0);
         rightDrive.setPower(0);
+        mineralMotor.setPower(0);
+
         // Set all motors to run without encoders.
         // May want to use RUN_USING_ENCODERS if encoders are installed.
         leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-      //  rampMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-     //   loaderMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-     //   extensionMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        //test
-    //    relicExtendMotorCmd.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        mineralMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
 
         ColorSensingServo = hwMap.get(Servo.class, "ColorSensingServo");
         MineralColorSensor = hwMap.get(ColorSensor.class, "MineralColorSensor");
